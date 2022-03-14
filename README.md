@@ -1,1 +1,1 @@
-# va-holec
+# Visual Analytics Project - HELOC
