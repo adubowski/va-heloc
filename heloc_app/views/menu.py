@@ -1,5 +1,5 @@
 from dash import dcc, html
-from ..config import color_list1, color_list2
+from ..config import graph_type,columns
 
 
 def generate_description_card():
@@ -27,22 +27,53 @@ def generate_control_card():
     return html.Div(
         id="control-card",
         children=[
-            html.Label("Color scatterplot 1"),
+            html.Label("Graph Type"),
             dcc.Dropdown(
-                id="select-color-scatter-1",
-                options=[{"label": i, "value": i} for i in color_list1],
-                value=color_list1[0],
+                id="graph-type-1",
+                options=[{"label": i, "value": i} for i in graph_type],
+                value=graph_type[0],
+                clearable=False,
             ),
             html.Br(),
-            html.Label("Color scatterplot 2"),
+            html.Label("Columns 1.1"),
             dcc.Dropdown(
-                id="select-color-scatter-2",
-                options=[{"label": i, "value": i} for i in color_list2],
-                value=color_list2[0],
+                id="columns-1",
+                options=[{"label": i, "value": i} for i in columns],
+                value=columns[0],
+                clearable=False,
+            ),
+            html.Label("Columns 1.2"),
+            dcc.Dropdown(
+                id="columns-2",
+                options=[{"label": i, "value": i} for i in columns],
+                value=columns[1],
+                clearable=False,
+            ),
+            html.Br(),
+            html.Br(),
+            html.Br(),
+            html.Br(),
+            html.Label("Graph Type 2"),
+            dcc.Dropdown(
+                id="graph-type-2",
+                options=[{"label": i, "value": i} for i in graph_type],
+                value=graph_type[1],
+                clearable=False,
+            ),
+            html.Br(),
+            html.Label("Columns 2.1"),
+            dcc.Dropdown(
+                id="columns-3",
+                options=[{"label": i, "value": i} for i in columns],
+                value=columns[0],
+                clearable=False,
+            ),
+            html.Label("Columns 2.2"),
+            dcc.Dropdown(
+                id="columns-4",
+                options=[{"label": i, "value": i} for i in columns],
+                value=columns[1],
+                clearable=False,
             ),
         ], style={"textAlign": "float-left"}
     )
-
-
-def make_menu_layout():
-    return [generate_description_card(), generate_control_card()]
