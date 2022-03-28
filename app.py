@@ -1,19 +1,33 @@
 from heloc_app.main import app
-from heloc_app.views.menu import make_menu_layout
+from heloc_app.views.menu import generate_control_card,generate_description_card
 from heloc_app.views.scatterplot import Scatterplot
-
+from heloc_app.views.barchart import Barchart
+from heloc_app.views.histogram import Histogram
+from heloc_app.data import get_data
 from dash import html
 import plotly.express as px
 from dash.dependencies import Input, Output
-
+from heloc_app.config import columns
 
 if __name__ == '__main__':
     # Create data
-    df = px.data.iris()
+    #df = px.data.iris()
+    X_test_transformed, y_test_transformed, features = get_data()
+    
 
-    # Instantiate custom views
-    scatterplot1 = Scatterplot("Scatterplot 1", 'sepal_length', 'sepal_width', df)
-    scatterplot2 = Scatterplot("Scatterplot 2", 'petal_length', 'petal_width', df)
+    graph_types = {
+        "Bar Chart" : Barchart("Bar chart", columns[0], columns[1], features),
+        "Histogram" : Histogram("Histogram", columns[0], columns[1], features),
+    }
+
+    #X-y 
+    X = features[features.columns[1:]]
+    y = features["RiskPerformance"]
+
+    
+    # Initialization
+    plot1 = Barchart("Bar chart", columns[0], columns[1], features)
+    plot2 = Histogram("Histogram", columns[0], columns[1], features)
 
     app.layout = html.Div(
         id="app-container",
@@ -22,7 +36,10 @@ if __name__ == '__main__':
             html.Div(
                 id="left-column",
                 className="three columns",
-                children=make_menu_layout()
+                children=[
+                    generate_description_card(), 
+                    generate_control_card()
+                ]
             ),
 
             # Right column
@@ -30,29 +47,36 @@ if __name__ == '__main__':
                 id="right-column",
                 className="nine columns",
                 children=[
-                    scatterplot1,
-                    scatterplot2
+                    plot1,
+                    plot2
                 ],
             ),
         ],
     )
 
-    # Define interactions
+   # Define interactions
     @app.callback(
-        Output(scatterplot1.html_id, "figure"), [
-        Input("select-color-scatter-1", "value"),
-        Input(scatterplot2.html_id, 'selectedData')
+        Output(plot1.html_id, "figure"), [
+        Input("graph-type-1", "value"),
+        Input("columns-1", "value"),
+        Input("columns-2", "value"),
+        #Input(plot1.html_id, 'selectedData')
+
     ])
-    def update_scatter_1(selected_color, selected_data):
-        return scatterplot1.update(selected_color, selected_data)
+    def update_first(graph_type, col1, col2):
+        plot1 = graph_types.get(graph_type)
+        return plot1.update(col1, col2)
 
     @app.callback(
-        Output(scatterplot2.html_id, "figure"), [
-        Input("select-color-scatter-2", "value"),
-        Input(scatterplot1.html_id, 'selectedData')
+        Output(plot2.html_id, "figure"), [
+        Input("graph-type-2", "value"),
+        Input("columns-3", "value"),
+        Input("columns-4", "value"),
+        #Input(scatterplot1.html_id, 'selectedData')
     ])
-    def update_scatter_2(selected_color, selected_data):
-        return scatterplot2.update(selected_color, selected_data)
+    def update_first(graph_type, col1, col2):
+        plot2 = graph_types.get(graph_type)
+        return plot2.update(col1, col2)
 
 
     app.run_server(debug=False, dev_tools_ui=False)
