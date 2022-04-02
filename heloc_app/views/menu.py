@@ -1,5 +1,5 @@
 from dash import dcc, html
-from ..config import graph_type,columns,color_type
+from ..config import graph_type, columns, color_type
 
 
 def generate_description_card():
