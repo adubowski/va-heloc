@@ -18,21 +18,33 @@ def get_data():
     #df = px.data.iris()
     #read csv
     features = pd.read_csv('heloc_model/heloc_dataset_v1.csv')
-    #impute special values with nan
-    features.replace([-9], np.nan, inplace=True)
-    #y label
-    labelDimension = "RiskPerformance"
+
+    
+    df = features.drop(["RiskPerformance"], axis = 1)
+
+    minusnine = df[df.apply(lambda x: min(x) == max(x), 1)]
+
+    #USED DATASET
+    features = features.drop(minusnine.index.tolist())
+
+    #y_copy= features[labelDimension].copy()
+    #minusnine_y = y_copy[minusnine.index.tolist()]
+
+    #print(minusnine_y.value_counts())
+    #USED Y VALUES
+    #reduced_y = y_copy.drop(minusnine.index.tolist())
+    #print(reduced_y)
     # Remove rows with more than 10 missing values
-    features = features.dropna() 
     features = features.reset_index(drop=True)
      # drop columns with more than 1000 special values
     #features.drop(features.columns[features.isnull().sum() > 1000], axis=1, inplace=True)
     
     #X-y 
     X = features[features.columns[1:]]
-    y = features[labelDimension]
+    y = features["RiskPerformance"]
     print(X.index == y.index)
     print(X.index)
+    print(len(y))
     #columns
     categorical = ['MaxDelqEver', 'MaxDelq/PublicRecLast12M']
     numerical = [col for col in X.columns if col not in categorical]
