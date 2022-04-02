@@ -28,13 +28,9 @@ class Boxplot(html.Div):
                 dcc.Graph(id=self.html_id),
             ],
         )
-    def update(self, selected_col1, selected_col2):
-        if selected_col1 != None:
-            self.col1 = selected_col1
-        if selected_col2 != None:
-            self.col2 = selected_col2
+    def update(self, cols):
         
-        self.fig = px.box(self.df)
+        self.fig = px.box(self.df[cols])
         
         self.fig.update_layout(
             yaxis_zeroline=False,
@@ -45,9 +41,9 @@ class Boxplot(html.Div):
         self.fig.update_yaxes(fixedrange=True)
 
         # update titles
-        self.fig.update_layout(
-            xaxis_title=self.col1,
-            yaxis_title=self.col2,
-        )
+        # self.fig.update_layout(
+        #     xaxis_title=self.col1,
+        #     yaxis_title=self.col2,
+        # )
         
         return self.fig

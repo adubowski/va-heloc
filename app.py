@@ -78,15 +78,32 @@ if __name__ == '__main__':
 
 
     @app.callback(
-        Output(plot2.html_id, "figure"), [
-            Input("graph-type-2", "value"),
-            Input("columns-3", "value"),
-            Input("columns-4", "value"),
-            # Input(scatterplot1.html_id, 'selectedData')
-        ])
-    def update_first(graph_type, col1, col2):
+        Output(plot2.html_id, "figure"), 
+        Output("div-hist", "style"),
+        Output("div-box", "style"),
+        [
+        Input("graph-type-2", "value"),
+        Input("columns-3", "value"),
+        Input("columns-4", "value"),
+        Input("col-group", "value"),
+        #Input(scatterplot1.html_id, 'selectedData')
+    ])
+    def update_second(graph_type, col1, col2, colgroup):
+        hide = {"display": "none"}
+        show = {"display": "block"}
         plot2 = graph_types.get(graph_type)
-        return plot2.update(col1, col2)
+        if graph_type == "Histogram":
+            
+            return plot2.update(col1, col2),show,hide
+        
+        elif graph_type == "Boxplot":
+            if colgroup == "Trade":
+                cols = ["MSinceOldestTradeOpen", "MSinceMostRecentTradeOpen"]
+            elif colgroup == "Inquiry":
+                cols = ["NumInqLast6M", "MSinceMostRecentInqexcl7days"]
+            else:
+                cols = ["MaxDelq/PublicRecLast12M", "MaxDelqEver"]
+            return plot2.update(cols),hide,show
 
 
     @app.callback(
