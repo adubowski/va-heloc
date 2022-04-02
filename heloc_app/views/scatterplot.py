@@ -22,9 +22,9 @@ class Scatterplot(html.Div):
 
     def update(self, sccolor):
 
-        #cols = [c for c in self.df.columns if c not in ["Embed1","Embed2"]]
+        # cols = [c for c in self.df.columns if c not in ["Embedding 1","Embedding 2"]]
         df1 = self.df.copy()
-        df1 = df1.drop(columns=["Embed1", "Embed2"])
+        df1 = df1.drop(columns=["Embedding 1", "Embedding 2"])
         self.fig = px.scatter(
             self.df,
             x=self.feature_x, 
@@ -41,8 +41,8 @@ class Scatterplot(html.Div):
             xaxis_zeroline=False,
             dragmode='select'
         )
-        self.fig.update_xaxes(fixedrange=True)
-        self.fig.update_yaxes(fixedrange=True)
+        self.fig.update_xaxes(fixedrange=True, showticklabels=False)
+        self.fig.update_yaxes(visible=False, showticklabels=False)
 
         # highlight points with selection other graph
         # if selected_data is None:

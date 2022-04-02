@@ -19,15 +19,15 @@ if __name__ == '__main__':
     dic = {
         "y_test": y_test,
         "y_predict": y_predict_prob,
-        "Embed1": X_embed[:, 0],
-        "Embed2": X_embed[:, 1]
+        "Embedding 1": X_embed[:, 0],
+        "Embedding 2": X_embed[:, 1]
     }
     X_copy = X_test.copy()
     for i, k in dic.items():
         X_copy[i] = k
 
     graph_types = {
-        "Scatterplot": Scatterplot("Scatterplot", "Embed1", "Embed2", X_copy),
+        "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2", X_copy),
         "Histogram": Histogram("Histogram", columns[0], columns[1], features),
         "Boxplot": Boxplot("Boxplot", None, None, features)
     }
