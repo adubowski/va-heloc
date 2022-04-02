@@ -46,3 +46,21 @@ h5 {
     padding-bottom: 7px;
     border-bottom:  1px solid #ccc;
 }
+
+.modal {
+    position: fixed; 
+    z-index: 1002; /* Sit on top, including modebar which has z=1001 */
+    left: 0;
+    top: 0;
+    width: 30%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgba(0, 0, 0, 0.6); /* Black w/ opacity */
+
+}
+
+.modal-content {
+    margin: 40px;
+    height: 600px;
+    padding: 40px;
+    background-color: #c58797;
+}

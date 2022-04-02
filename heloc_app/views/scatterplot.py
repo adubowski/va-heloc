@@ -1,4 +1,6 @@
 from dash import dcc, html
+from numpy import size
+import plotly.express as px
 import plotly.graph_objects as go
 
 
@@ -18,18 +20,22 @@ class Scatterplot(html.Div):
             ],
         )
 
-    def update(self, selected_color, selected_data):
-        self.fig = go.Figure()
+    def update(self, sccolor):
 
-        x_values = self.df[self.feature_x]
-        y_values = self.df[self.feature_y]
-        self.fig.add_trace(go.Scatter(
-            x=x_values, 
-            y=y_values,
-            mode='markers',
-            marker_color='rgb(200,200,200)'
-        ))
-        self.fig.update_traces(mode='markers', marker_size=10)
+        #cols = [c for c in self.df.columns if c not in ["Embed1","Embed2"]]
+        df1 = self.df.copy()
+        df1 = df1.drop(columns=["Embed1", "Embed2"])
+        self.fig = px.scatter(
+            self.df,
+            x=self.feature_x, 
+            y=self.feature_y,
+            hover_data=df1.columns,
+            color=sccolor,
+        )
+
+        # x_values = self.df[self.feature_x]
+        # y_values = self.df[self.feature_y]
+        self.fig.update_traces(mode='markers', marker_size=5)
         self.fig.update_layout(
             yaxis_zeroline=False,
             xaxis_zeroline=False,
@@ -39,28 +45,28 @@ class Scatterplot(html.Div):
         self.fig.update_yaxes(fixedrange=True)
 
         # highlight points with selection other graph
-        if selected_data is None:
-            selected_index = self.df.index  # show all
-        else:
-            selected_index = [  # show only selected indices
-                x.get('pointIndex', None)
-                for x in selected_data['points']
-            ]
+        # if selected_data is None:
+        #     selected_index = self.df.index  # show all
+        # else:
+        #     selected_index = [  # show only selected indices
+        #         x.get('pointIndex', None)
+        #         for x in selected_data['points']
+        #     ]
 
-        self.fig.data[0].update(
-            selectedpoints=selected_index,
+        # self.fig.data[0].update(
+        #     selectedpoints=selected_index,
 
-            # color of selected points
-            selected=dict(marker=dict(color=selected_color)),
+        #     # color of selected points
+        #     selected=dict(marker=dict(color=selected_color)),
 
-            # color of unselected pts
-            unselected=dict(marker=dict(color='rgb(200,200,200)', opacity=0.9))
-        )
+        #     # color of unselected pts
+        #     unselected=dict(marker=dict(color='rgb(200,200,200)', opacity=0.9))
+        # )
 
         # update axis titles
-        self.fig.update_layout(
-            xaxis_title=self.feature_x,
-            yaxis_title=self.feature_y,
-        )
+        # self.fig.update_layout(
+        #     xaxis_title=self.feature_x,
+        #     yaxis_title=self.feature_y,
+        # )
 
         return self.fig

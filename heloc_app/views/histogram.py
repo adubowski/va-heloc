@@ -37,7 +37,7 @@ class Histogram(html.Div):
             self.col2 = selected_col2
         
         self.fig = px.histogram(self.df, x=self.col1, y=self.col2, color="RiskPerformance",
-                   marginal="box", # or violin, rug
+                   marginal="violin", # or violin, rug
                    hover_data=self.df.columns)
         
         self.fig.update_layout(
