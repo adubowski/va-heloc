@@ -89,7 +89,7 @@ if __name__ == '__main__':
             # Left column
             html.Div(
                 id="left-column",
-                className="three columns",
+                className="two columns",
                 children=[
                     generate_description_card(),
                     data_interactions(),
@@ -99,11 +99,11 @@ if __name__ == '__main__':
             # Right column
             html.Div(
                 dcc.Tabs(id='tabs', value='data', children=[
-                    dcc.Tab(label='Data', value='data', children=[data_scatter]),
                     dcc.Tab(label='Local explanations', value='local exp', children=[plot1, plot3, plot2]),
+                    dcc.Tab(label='Data', value='data', children=[data_scatter]),
                 ]),
                 id="right-column",
-                className="nine columns",
+                className="ten columns",
             ),
         ],
     )

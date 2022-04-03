@@ -48,10 +48,12 @@ class DataScatterMatrix(html.Div):
             xaxis_zeroline=False,
             dragmode='select',
             width=1600,
-            height=1200,
+            height=1100,
             hovermode='closest',
         )
         self.fig.update_xaxes(fixedrange=True)
         self.fig.update_yaxes(fixedrange=True)
 
+        for annotation in self.fig['layout']['annotations']:
+            annotation['textangle'] = 60
         return self.fig
