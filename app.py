@@ -1,5 +1,5 @@
 from heloc_app.main import app
-from heloc_app.views.menu import generate_control_card, generate_description_card, feature_selection
+from heloc_app.views.menu import generate_control_card, generate_description_card
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.lime_barchart import LimeBarchart
@@ -11,10 +11,16 @@ import pandas as pd
 from dash.dependencies import Input, Output
 import json
 from dice_ml import Data, Model, Dice
+# ignore known warnings
+from warnings import simplefilter
+simplefilter(action='ignore', category=FutureWarning)
+simplefilter(action='ignore', category=UserWarning)
+
 
 if __name__ == '__main__':
     # Create data
-    X_test_transformed, X_test, y_test, features, y_predict_prob, X_train, y_train, model, numerical = get_data()
+    X_test_transformed, X_test, y_test, features, y_predict_prob, X_train, y_train, \
+        model, numerical = get_data()
     columns = features[features.columns[1:]].columns.tolist()
     X_embed = tsne(X_test_transformed)
     dic = {
@@ -46,7 +52,8 @@ if __name__ == '__main__':
         )
         m = Model(model=model, backend='sklearn')
         dice = Dice(data, m, method='random')
-        e = dice.generate_counterfactuals(X_test.loc[[pointindex]], total_CFs=1, desired_class="opposite")
+        e = dice.generate_counterfactuals(X_test.loc[[pointindex]], total_CFs=1,
+                                          desired_class="opposite")
 
         d = json.loads(e.to_json())
         cfs_list = d['cfs_list'][0][0][:20]
@@ -66,7 +73,11 @@ if __name__ == '__main__':
     # Initialization
     plot1 = graph_types.get("Scatterplot")
     df = counter(X_train, y_train, X_test, model, numerical, X_test.index[6])
-    plot2 = dash_table.DataTable(data=df.to_dict('records'), columns=[{"name": i, "id": i} for i in df.columns], id= 'tbl')
+    plot2 = dash_table.DataTable(
+        data=df.to_dict('records'),
+        columns=[{"name": i, "id": i} for i in df.columns],
+        id='tbl'
+    )
     plot3 = graph_types.get("LimeBarchart")
 
     app.layout = html.Div(
@@ -79,7 +90,7 @@ if __name__ == '__main__':
                 children=[
                     generate_description_card(),
                     generate_control_card(),
-                    feature_selection()
+                    # feature_selection()
                 ]
             ),
 
@@ -93,6 +104,7 @@ if __name__ == '__main__':
                     plot2,
                 ],
             ),
+
         ],
     )
 
@@ -100,20 +112,18 @@ if __name__ == '__main__':
     @app.callback(
         Output(plot1.html_id, "figure"), [
         Input("color-type-1", "value"),
-        Input(plot1.html_id, 'selectedData'),
-        Input(plot1.html_id, "clickData"),
-
         ])
-    def update_first(sccolor, selected_data, clicked_data):
-        return plot1.update(sccolor, selected_data)
+    def update_first(sccolor):
+        return plot1.update(sccolor)
 
     # Define interactions
     @app.callback(
-        Output(plot3.html_id, "figure"), [
-        Input(plot1.html_id, "clickData"),
-
-        ])
+        Output(plot3.html_id, "figure"),
+        [Input(plot1.html_id, "clickData")]
+    )
     def update_third(clicked):
+        print("Update LIME barchart")
+        print(clicked)
         if clicked is not None:
             return plot3.update(clicked['points'][0].get('customdata')[0])
         return plot3.update(X_test.index[0])
@@ -126,28 +136,31 @@ if __name__ == '__main__':
     )
     def update_table(clicked):
         if clicked is not None:
-            df = counter(X_train, y_train, X_test, model, numerical, clicked['points'][0].get('customdata')[0])
+            print("Update data table")
+            print(clicked)
+            df = counter(X_train, y_train, X_test, model, numerical,
+                         clicked['points'][0].get('customdata')[0])
             data = df.to_dict('records')
             columns = [{"name": i, "id": i} for i in df.columns]
             return data, columns
 
 
-    @app.callback(
-        Output('modal', 'style'), [
-            Input("features-button", "n_clicks")
-        ])
-    def show_feature(n):
-        print(n)
-        if n > 0:
-            print("here")
-            return {"display": "block"}
-        return {"display": "none"}
-
-    # Close modal by resetting info_button click to 0
-    @app.callback(Output('features-button', 'n_clicks'),
-                  [Input('modal-close-button', 'n_clicks')])
-    def close_feature(n):
-        return 0
+    # @app.callback(
+    #     Output('modal', 'style'), [
+    #         Input("features-button", "n_clicks")
+    #     ])
+    # def show_feature(n):
+    #     print(n)
+    #     if n > 0:
+    #         print("here")
+    #         return {"display": "block"}
+    #     return {"display": "none"}
+    #
+    # # Close modal by resetting info_button click to 0
+    # @app.callback(Output('features-button', 'n_clicks'),
+    #               [Input('modal-close-button', 'n_clicks')])
+    # def close_feature(n):
+    #     return 0
 
 
     app.run_server(debug=False, dev_tools_ui=False)

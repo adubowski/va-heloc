@@ -26,7 +26,9 @@ class LimeBarchart(html.Div):
                         children="LIME Probability Explained"
                         ),
                 dcc.Graph(id=self.html_id),
-
+                html.H6(id="Counterfactuals",
+                        children="Counterfactual Explanations - What change is needed to achieve the opposite outcome?"
+                        ),
             ],
         )
 

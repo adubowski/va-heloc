@@ -20,12 +20,13 @@ class Scatterplot(html.Div):
             ],
         )
 
-    def update(self, sccolor, selected_data):
+    def update(self, sccolor):
         self.fig = px.scatter(
             self.df,
             x=self.feature_x, 
             y=self.feature_y,
             hover_data=self.df.columns,
+            custom_data=[self.df.index],
             color=sccolor,
         )
 
@@ -37,7 +38,7 @@ class Scatterplot(html.Div):
             xaxis_zeroline=False,
             dragmode='select'
         )
-        self.fig.update_xaxes(fixedrange=True, showticklabels=False)
+        self.fig.update_xaxes(visible=False, showticklabels=False)
         self.fig.update_yaxes(visible=False, showticklabels=False)
 
         # highlight points with selection other graph

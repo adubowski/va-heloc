@@ -42,7 +42,7 @@ def get_data():
         features[cat] = features[cat].astype("category")
 
     # model
-    model = RandomForestClassifier(n_estimators=250)
+    model = RandomForestClassifier(n_estimators=200)
 
     num_pipe = make_pipeline(SimpleImputer(strategy='mean'), StandardScaler())
     cat_pipe = make_pipeline(SimpleImputer(strategy='most_frequent'), OrdinalEncoder())
@@ -59,5 +59,5 @@ def get_data():
 
 
 def tsne(X_test):
-    X_embed = TSNE(n_components=2, learning_rate='auto', init='random').fit_transform(X_test)
+    X_embed = TSNE(n_components=2, learning_rate='auto', init='pca').fit_transform(X_test)
     return X_embed
