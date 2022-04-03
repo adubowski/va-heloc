@@ -3,9 +3,10 @@ from heloc_app.views.menu import generate_description_card, local_interactions, 
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.lime_barchart import LimeBarchart
+from heloc_app.views.scatter_matrix import DataScatterMatrix
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, tsne
-from dash import html, dash_table,dcc
+from dash import html, dash_table, dcc
 import plotly.express as px
 import pandas as pd
 from dash.dependencies import Input, Output
@@ -13,9 +14,9 @@ import json
 from dice_ml import Data, Model, Dice
 # ignore known warnings
 from warnings import simplefilter
+
 simplefilter(action='ignore', category=FutureWarning)
 simplefilter(action='ignore', category=UserWarning)
-
 
 if __name__ == '__main__':
     # Create data
@@ -37,17 +38,17 @@ if __name__ == '__main__':
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2", X_copy),
         "Histogram": Histogram("Histogram", columns[0], columns[1], features),
         "Boxplot": Boxplot("Boxplot", None, None, features),
-        "LimeBarchart": LimeBarchart("LimeBarchart", X_test.index[0], X_train, X_test, model)
+        "LimeBarchart": LimeBarchart("LimeBarchart", X_test.index[0], X_train, X_test, model),
+        "DataScatterMatrix": DataScatterMatrix("DataScatterMatrix", features, model)
     }
-
 
     def counter(X_train, y_train, X_test, model, numerical, pointindex):
         # DiCE counterfactual explanations
         df = X_train.copy()
         df['y'] = y_train.copy()
         data = Data(
-            dataframe=df, 
-            continuous_features=numerical, 
+            dataframe=df,
+            continuous_features=numerical,
             outcome_name='y'
         )
         m = Model(model=model, backend='sklearn')
@@ -70,6 +71,7 @@ if __name__ == '__main__':
         output['index'] = output.index.tolist()
         return output
 
+
     # Initialization
     plot1 = graph_types.get("Scatterplot")
     df = counter(X_train, y_train, X_test, model, numerical, X_test.index[6])
@@ -79,6 +81,7 @@ if __name__ == '__main__':
         id='tbl'
     )
     plot3 = graph_types.get("LimeBarchart")
+    data_scatter = graph_types.get("DataScatterMatrix")
 
     app.layout = html.Div(
         id="app-container",
@@ -96,7 +99,7 @@ if __name__ == '__main__':
             # Right column
             html.Div(
                 dcc.Tabs(id='tabs', value='data', children=[
-                    dcc.Tab(label='Data', value='data'),
+                    dcc.Tab(label='Data', value='data', children=[data_scatter]),
                     dcc.Tab(label='Local explanations', value='local exp', children=[plot1, plot3, plot2]),
                 ]),
                 id="right-column",
@@ -108,10 +111,18 @@ if __name__ == '__main__':
     # Define interactions
     @app.callback(
         Output(plot1.html_id, "figure"), [
-        Input("color-type-1", "value"),
+            Input("color-type-1", "value"),
         ])
     def update_first(sccolor):
         return plot1.update(sccolor)
+
+    # Define interactions
+    @app.callback(
+        Output(data_scatter.html_id, "figure"), [
+            Input("color-selector-data", "value"),
+        ])
+    def update_data_scatter(sccolor):
+        return data_scatter.update(sccolor)
 
     # Define interactions
     @app.callback(
@@ -124,11 +135,12 @@ if __name__ == '__main__':
         if clicked is not None:
             return plot3.update(clicked['points'][0].get('customdata')[0])
         return plot3.update(X_test.index[0])
-        
+
+
     @app.callback(
         Output("tbl", "data"),
-        Output("tbl", "columns"),[
-        Input(plot1.html_id, "clickData"),
+        Output("tbl", "columns"), [
+            Input(plot1.html_id, "clickData"),
         ]
     )
     def update_table(clicked):
@@ -140,21 +152,21 @@ if __name__ == '__main__':
             data = df.to_dict('records')
             columns = [{"name": i, "id": i} for i in df.columns]
             return data, columns
-   
+
+
     @app.callback(
-        Output("left-column", "children"),[
-        Input("tabs", "value"),
+        Output("left-column", "children"), [
+            Input("tabs", "value"),
         ]
     )
     def update_interactions(tab):
         if tab == 'data':
-            children= [generate_description_card(),data_interactions()]
+            children = [generate_description_card(), data_interactions()]
         else:
-            children= [generate_description_card(),local_interactions()]
+            children = [generate_description_card(), local_interactions()]
         return children
-   
-   
-   
+
+
     # @app.callback(
     #     Output('modal', 'style'), [
     #         Input("features-button", "n_clicks")
@@ -171,6 +183,5 @@ if __name__ == '__main__':
     #               [Input('modal-close-button', 'n_clicks')])
     # def close_feature(n):
     #     return 0
-
 
     app.run_server(debug=False, dev_tools_ui=False)

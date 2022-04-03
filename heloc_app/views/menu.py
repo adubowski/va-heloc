@@ -1,5 +1,5 @@
 from dash import dcc, html
-from ..config import graph_type, columns, color_type,col_group,colorssc
+from ..config import graph_type, columns, color_type, col_group, colorssc
 
 
 def generate_description_card():
@@ -12,7 +12,8 @@ def generate_description_card():
             html.H5("HELOC Group 22"),
             html.Div(
                 id="intro",
-                children="Analyse local predictions of the model with the following columns. Select a point and wait a couple of seconds to see local and counterfactual explanations.",
+                children="Analyse local predictions of the model with the following columns. "
+                         "Select a point and wait a couple of seconds to see local and counterfactual explanations.",
             ),
         ],
     )
@@ -42,6 +43,13 @@ def data_interactions():
     return html.Div(
         id="control-card",
         children=[
+            html.Label("Select column for coloring:"),
+            dcc.Dropdown(
+                id="color-selector-data",
+                options=[{"label": i, "value": i} for i in columns],
+                value=columns[0],
+                clearable=False,
+            ),
             # html.Br(),
             # html.Button('Select Features', id="features-button", n_clicks=0),
             # html.Br(),
@@ -50,49 +58,49 @@ def data_interactions():
             # html.Br(),
             # html.Br(),
             # html.Br(),
-            html.Label("Graph Type 2"),
-            dcc.Dropdown(
-            id="graph-type-2",
-            options=[{"label": i, "value": i} for i in graph_type],
-            value=graph_type[0],
-            clearable=False,
-            ),
-            ########### Histogram Div #########
-            html.Div(
-                id = "div-hist",
-                children = [
-                    html.Label("Columns 2.1"),
-                    dcc.Dropdown(
-                        id="columns-3",
-                        options=[{"label": i, "value": i} for i in columns],
-                        value=columns[0],
-                        clearable=False,
-                    ),
-                    html.Label("Columns 2.2"),
-                    dcc.Dropdown(
-                        id="columns-4",
-                        options=[{"label": i, "value": i} for i in columns],
-                        value=columns[1],
-                        clearable=False,
-                    ),
-                ],
-            ),
-            
-            
-            html.Br(),
-            ########### Boxplot Div #########
-            html.Div(
-                id = "div-box",
-                children = [
-                    html.Label("Col types"),
-                    dcc.Dropdown(
-                        id="col-group",
-                        options=[{"label": i, "value": i} for i in col_group],
-                        value=col_group[0],
-                        clearable=False,
-                    ),
-                ],
-            ),
+            # html.Label("Graph Type 2"),
+            # dcc.Dropdown(
+            # id="graph-type-2",
+            # options=[{"label": i, "value": i} for i in graph_type],
+            # value=graph_type[0],
+            # clearable=False,
+            # ),
+            # ########### Histogram Div #########
+            # html.Div(
+            #     id = "div-hist",
+            #     children = [
+            #         html.Label("Columns 2.1"),
+            #         dcc.Dropdown(
+            #             id="columns-3",
+            #             options=[{"label": i, "value": i} for i in columns],
+            #             value=columns[0],
+            #             clearable=False,
+            #         ),
+            #         html.Label("Columns 2.2"),
+            #         dcc.Dropdown(
+            #             id="columns-4",
+            #             options=[{"label": i, "value": i} for i in columns],
+            #             value=columns[1],
+            #             clearable=False,
+            #         ),
+            #     ],
+            # ),
+            #
+            #
+            # html.Br(),
+            # ########### Boxplot Div #########
+            # html.Div(
+            #     id = "div-box",
+            #     children = [
+            #         html.Label("Col types"),
+            #         dcc.Dropdown(
+            #             id="col-group",
+            #             options=[{"label": i, "value": i} for i in col_group],
+            #             value=col_group[0],
+            #             clearable=False,
+            #         ),
+            #     ],
+            # ),
         ], style={"textAlign": "float-left"}
     )
 
