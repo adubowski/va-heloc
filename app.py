@@ -5,15 +5,16 @@ from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.barchart import Barchart
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, tsne
-from dash import html
+from dash import html, dash_table
 import plotly.express as px
 import pandas as pd
 from dash.dependencies import Input, Output
-
+import json
+from dice_ml import Data, Model, Dice
 
 if __name__ == '__main__':
     # Create data
-    X_test_transformed, X_test, y_test, features, y_predict_prob = get_data()
+    X_test_transformed, X_test, y_test, features, y_predict_prob,X_train, y_train, model, numerical = get_data()
     columns = features[features.columns[1:]].columns.tolist()
     X_embed = tsne(X_test_transformed)
     dic = {
@@ -32,9 +33,43 @@ if __name__ == '__main__':
         "Boxplot": Boxplot("Boxplot", None, None, features)
     }
 
+
+    def counter(X_train, y_train, X_test, model, numerical, pointindex):
+        # DiCE counterfactual explanations
+        
+
+        df = X_train.copy()
+        df['y'] = y_train.copy()
+        data = Data(
+            dataframe=df, 
+            continuous_features=numerical, 
+            outcome_name='y'
+        )
+        m = Model(model=model, backend='sklearn')
+        dice = Dice(data, m, method='random')
+        e = dice.generate_counterfactuals(X_test.loc[[pointindex]], total_CFs=1, desired_class="opposite")
+
+        # As an improvement point for the future work in the report - 
+        # would be great if we could get counterfactual probability as well, it is a work in progress in the DiCE library
+        d = json.loads(e.to_json())
+        cfs_list = d['cfs_list'][0][0][:20]
+        test_data = d['test_data'][0][0][:20]
+        cf_df = pd.DataFrame([test_data, cfs_list], columns=d['feature_names'], index=['Actual', 'Closest CounterFactual'])
+        nunique = cf_df.nunique()
+        cols_to_drop = nunique[nunique == 1].index
+
+        output = cf_df.drop(cols_to_drop, axis=1)
+        output['index'] = output.index.tolist()
+        return output
+
+
+
+
     # Initialization
     plot1 = graph_types.get("Scatterplot")
-    plot2 = Histogram("Histogram", columns[0], columns[1], features)
+    df = counter(X_train, y_train, X_test, model, numerical, X_test.index[6])
+    plot2 = dash_table.DataTable(data=df.to_dict('records'),columns=[{"name": i, "id": i} for i in df.columns])
+    #Histogram("Histogram", columns[0], columns[1], features)
 
     app.layout = html.Div(
         id="app-container",
@@ -65,45 +100,43 @@ if __name__ == '__main__':
     # Define interactions
     @app.callback(
         Output(plot1.html_id, "figure"), [
-            Input("color-type-1", "value"),
+        Input("color-type-1", "value"),
             # Input("columns-1", "value"),
             # Input("columns-2", "value"),
-            # Input(plot1.html_id, 'selectedData')
+        Input(plot1.html_id, 'selectedData'),
+        Input(plot1.html_id, "clickData"),
 
         ])
-    def update_first(sccolor):
-        print("hello")
-        # plot1 = graph_types.get(graph_type)
-        return plot1.update(sccolor)
+    def update_first(sccolor, selected_data, clicked_data):
+        return plot1.update(sccolor, selected_data)
 
 
-    @app.callback(
-        Output(plot2.html_id, "figure"), 
-        Output("div-hist", "style"),
-        Output("div-box", "style"),
-        [
-        Input("graph-type-2", "value"),
-        Input("columns-3", "value"),
-        Input("columns-4", "value"),
-        Input("col-group", "value"),
-        #Input(scatterplot1.html_id, 'selectedData')
-    ])
-    def update_second(graph_type, col1, col2, colgroup):
-        hide = {"display": "none"}
-        show = {"display": "block"}
-        plot2 = graph_types.get(graph_type)
-        if graph_type == "Histogram":
-            
-            return plot2.update(col1, col2),show,hide
+    # @app.callback(
+    #     Output(plot2.html_id, "figure"), 
+    #     Output("div-hist", "style"),
+    #     Output("div-box", "style"),
+    #     [
+    #     Input("graph-type-2", "value"),
+    #     Input("columns-3", "value"),
+    #     Input("columns-4", "value"),
+    #     Input("col-group", "value"),
+    #     Input(plot1.html_id, 'selectedData')
+    # ])
+    # def update_second(graph_type, col1, col2, colgroup, selected_data):
+    #     hide = {"display": "none"}
+    #     show = {"display": "block"}
+    #     plot2 = graph_types.get(graph_type)
+    #     if graph_type == "Histogram":
+    #         return plot2.update(col1, col2, selected_data),show,hide
         
-        elif graph_type == "Boxplot":
-            if colgroup == "Trade":
-                cols = ["MSinceOldestTradeOpen", "MSinceMostRecentTradeOpen"]
-            elif colgroup == "Inquiry":
-                cols = ["NumInqLast6M", "MSinceMostRecentInqexcl7days"]
-            else:
-                cols = ["MaxDelq/PublicRecLast12M", "MaxDelqEver"]
-            return plot2.update(cols),hide,show
+    #     elif graph_type == "Boxplot":
+    #         if colgroup == "Trade":
+    #             cols = ["MSinceOldestTradeOpen", "MSinceMostRecentTradeOpen"]
+    #         elif colgroup == "Inquiry":
+    #             cols = ["NumInqLast6M", "MSinceMostRecentInqexcl7days"]
+    #         else:
+    #             cols = ["MaxDelq/PublicRecLast12M", "MaxDelqEver"]
+    #         return plot2.update(cols),hide,show
 
 
     @app.callback(
