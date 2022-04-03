@@ -100,8 +100,6 @@ if __name__ == '__main__':
     @app.callback(
         Output(plot1.html_id, "figure"), [
         Input("color-type-1", "value"),
-            # Input("columns-1", "value"),
-            # Input("columns-2", "value"),
         Input(plot1.html_id, 'selectedData'),
         Input(plot1.html_id, "clickData"),
 
@@ -132,34 +130,6 @@ if __name__ == '__main__':
             data = df.to_dict('records')
             columns = [{"name": i, "id": i} for i in df.columns]
             return data, columns
-    
-    
-    # @app.callback(
-    #     Output(plot2.html_id, "figure"), 
-    #     Output("div-hist", "style"),
-    #     Output("div-box", "style"),
-    #     [
-    #     Input("graph-type-2", "value"),
-    #     Input("columns-3", "value"),
-    #     Input("columns-4", "value"),
-    #     Input("col-group", "value"),
-    #     Input(plot1.html_id, 'selectedData')
-    # ])
-    # def update_second(graph_type, col1, col2, colgroup, selected_data):
-    #     hide = {"display": "none"}
-    #     show = {"display": "block"}
-    #     plot2 = graph_types.get(graph_type)
-    #     if graph_type == "Histogram":
-    #         return plot2.update(col1, col2, selected_data),show,hide
-        
-    #     elif graph_type == "Boxplot":
-    #         if colgroup == "Trade":
-    #             cols = ["MSinceOldestTradeOpen", "MSinceMostRecentTradeOpen"]
-    #         elif colgroup == "Inquiry":
-    #             cols = ["NumInqLast6M", "MSinceMostRecentInqexcl7days"]
-    #         else:
-    #             cols = ["MaxDelq/PublicRecLast12M", "MaxDelqEver"]
-    #         return plot2.update(cols),hide,show
 
 
     @app.callback(

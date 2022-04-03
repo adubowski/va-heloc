@@ -21,15 +21,11 @@ class Scatterplot(html.Div):
         )
 
     def update(self, sccolor, selected_data):
-
-        # cols = [c for c in self.df.columns if c not in ["Embedding 1","Embedding 2"]]
-        df1 = self.df.copy()
-        df1 = df1.drop(columns=["Embedding 1", "Embedding 2"])
         self.fig = px.scatter(
             self.df,
             x=self.feature_x, 
             y=self.feature_y,
-            hover_data=[df1.index],
+            hover_data=self.df.columns,
             color=sccolor,
         )
 
