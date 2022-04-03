@@ -27,16 +27,7 @@ class DataScatterMatrix(html.Div):
             ],
         )
 
-    def update(self, selected_color):
-        cols = [
-            "NumTrades60Ever/DerogPubRec",
-            "NumTradesOpeninLast12M",
-            "NumInqLast6M",
-            "NumRevolvingTradesWBalance",
-            "NumInstallTradesWBalance",
-            "NumBank/NatlTradesWHighUtilization",
-            "NumSatisfactoryTrades"
-        ]
+    def update(self, cols, selected_color):
         self.fig = px.scatter_matrix(
             data_frame=self.df,
             dimensions=cols,

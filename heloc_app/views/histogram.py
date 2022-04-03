@@ -30,7 +30,7 @@ class Histogram(html.Div):
                 dcc.Graph(id=self.html_id),
             ],
         )
-    def update(self, selected_col1, selected_col2, selected_data):
+    def update(self, selected_col1, selected_col2):
         if selected_col1 != None:
             self.col1 = selected_col1
         if selected_col2 != None:

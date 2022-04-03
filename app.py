@@ -36,10 +36,11 @@ if __name__ == '__main__':
 
     graph_types = {
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2", X_copy),
-        "Histogram": Histogram("Histogram", columns[0], columns[1], features),
-        "Boxplot": Boxplot("Boxplot", None, None, features),
         "LimeBarchart": LimeBarchart("LimeBarchart", X_test.index[0], X_train, X_test, model),
-        "DataScatterMatrix": DataScatterMatrix("DataScatterMatrix", features, model)
+        ###### For Data tab
+        "Scatterplot Matrix": DataScatterMatrix("DataScatterMatrix", features, model),
+        "Boxplot": Boxplot("Boxplot", features),
+        "Histogram": Histogram("Histogram", columns[0], columns[1], features),
     }
 
     def counter(X_train, y_train, X_test, model, numerical, pointindex):
@@ -74,14 +75,14 @@ if __name__ == '__main__':
 
     # Initialization
     plot1 = graph_types.get("Scatterplot")
-    df = counter(X_train, y_train, X_test, model, numerical, X_test.index[6])
+    df = counter(X_train, y_train, X_test, model, numerical, X_test.index[0])
     plot2 = dash_table.DataTable(
         data=df.to_dict('records'),
         columns=[{"name": i, "id": i} for i in df.columns],
         id='tbl'
     )
     plot3 = graph_types.get("LimeBarchart")
-    data_scatter = graph_types.get("DataScatterMatrix")
+    data_plot = graph_types.get("Scatterplot Matrix")
 
     app.layout = html.Div(
         id="app-container",
@@ -100,7 +101,7 @@ if __name__ == '__main__':
             html.Div(
                 dcc.Tabs(id='tabs', value='data', children=[
                     dcc.Tab(label='Local explanations', value='local exp', children=[plot1, plot3, plot2]),
-                    dcc.Tab(label='Data', value='data', children=[data_scatter]),
+                    dcc.Tab(label='Data', value='data', children=[data_plot]),
                 ]),
                 id="right-column",
                 className="ten columns",
@@ -118,12 +119,59 @@ if __name__ == '__main__':
 
     # Define interactions
     @app.callback(
-        Output(data_scatter.html_id, "figure"), [
-            Input("color-selector-data", "value"),
+        Output(data_plot.html_id, "figure"),
+        Output("div-hist", "style"),
+        Output("div-color", "style"),
+        Output("div-group", "style"),  [
+        Input("color-selector-data", "value"),
+        Input("graph-type-2", "value"),
+        Input("group-type-2", "value"),
+        Input("columns-3", "value"),
+        Input("columns-4", "value"),
         ])
-    def update_data_scatter(sccolor):
-        return data_scatter.update(sccolor)
+    def update_data_plot(sccolor, graph, group, col_x, col_y):
+        data_plot = graph_types.get(graph)
+        
+        show = {"display": "block"}
+        hide = {"display": "none"}
 
+        if group == 'Number of':
+            cols = [
+            "NumTrades60Ever/DerogPubRec",
+            "NumTradesOpeninLast12M",
+            "NumInqLast6M",
+            "NumRevolvingTradesWBalance",
+            "NumInstallTradesWBalance",
+            "NumBank/NatlTradesWHighUtilization",
+            "NumSatisfactoryTrades"
+        ]
+        elif group == 'Number of months':
+            cols = [
+            "MSinceOldestTradeOpen",
+            "MSinceMostRecentTradeOpen",
+            "AverageMInFile",
+            "MSinceMostRecentDelq",
+            "MSinceMostRecentInqexcl7days",
+            ]
+        elif group == 'Percentage':
+            cols = [
+                "PercentTradesNeverDelq",
+                "PercentInstallTrades",
+                "PercentTradesWBalance",
+            ]
+        elif group == 'Net Fraction':
+            cols = [
+                "NetFractionRevolvingBurden",
+                "NetFractionInstallBurden",
+            ]
+
+        if graph == "Scatterplot Matrix":
+            return data_plot.update(cols, sccolor),hide,show,show
+        elif graph == "Histogram":
+            return data_plot.update(col_x, col_y),show,hide,hide
+        else: # Boxplot
+            return data_plot.update(cols),hide,hide,show
+    
     # Define interactions
     @app.callback(
         Output(plot3.html_id, "figure"),

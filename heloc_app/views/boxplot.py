@@ -2,7 +2,7 @@ from dash import dcc, html
 import plotly.express as px
 
 class Boxplot(html.Div):
-    def __init__(self, name, col1, col2, df):
+    def __init__(self, name, df):
         """
        :param name: name of the plot
        :param feature_x: x attribute
@@ -10,8 +10,6 @@ class Boxplot(html.Div):
        """
         self.html_id = name.lower().replace(" ", "-")
         self.df = df
-        self.col2 = col1
-        self.col2 = col2
         self.name = name
         self.title_id = self.html_id + "-t"
         #self.tool_id = self.html_id + "-hs"
@@ -29,8 +27,8 @@ class Boxplot(html.Div):
             ],
         )
     def update(self, cols):
-        
-        self.fig = px.box(self.df[cols])
+        colss = ["RiskPerformance"] + cols
+        self.fig = px.box(self.df[colss], color="RiskPerformance")
         
         self.fig.update_layout(
             yaxis_zeroline=False,
