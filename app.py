@@ -66,7 +66,7 @@ if __name__ == '__main__':
     # Initialization
     plot1 = graph_types.get("Scatterplot")
     df = counter(X_train, y_train, X_test, model, numerical, X_test.index[6])
-    plot2 = dash_table.DataTable(data=df.to_dict('records'), columns=[{"name": i, "id": i} for i in df.columns])
+    plot2 = dash_table.DataTable(data=df.to_dict('records'), columns=[{"name": i, "id": i} for i in df.columns], id= 'tbl')
     plot3 = graph_types.get("LimeBarchart")
 
     app.layout = html.Div(
@@ -112,12 +112,28 @@ if __name__ == '__main__':
     # Define interactions
     @app.callback(
         Output(plot3.html_id, "figure"), [
-        Input("color-type-1", "value"),
-        ])
-    def update_third(value):
-        value = value
-        return plot3.update(X_test.index[0])
+        Input(plot1.html_id, "clickData"),
 
+        ])
+    def update_third(clicked):
+        if clicked is not None:
+            return plot3.update(clicked['points'][0].get('customdata')[0])
+        return plot3.update(X_test.index[0])
+        
+    @app.callback(
+        Output("tbl", "data"),
+        Output("tbl", "columns"),[
+        Input(plot1.html_id, "clickData"),
+        ]
+    )
+    def update_table(clicked):
+        if clicked is not None:
+            df = counter(X_train, y_train, X_test, model, numerical, clicked['points'][0].get('customdata')[0])
+            data = df.to_dict('records')
+            columns = [{"name": i, "id": i} for i in df.columns]
+            return data, columns
+    
+    
     # @app.callback(
     #     Output(plot2.html_id, "figure"), 
     #     Output("div-hist", "style"),

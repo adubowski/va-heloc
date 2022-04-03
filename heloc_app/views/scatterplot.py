@@ -29,7 +29,7 @@ class Scatterplot(html.Div):
             self.df,
             x=self.feature_x, 
             y=self.feature_y,
-            hover_data=df1.columns,
+            hover_data=[df1.index],
             color=sccolor,
         )
 

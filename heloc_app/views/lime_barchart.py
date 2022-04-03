@@ -23,7 +23,7 @@ class LimeBarchart(html.Div):
             className="graph_card",
             children=[
                 html.H6(id=self.title_id,
-                        children="Data Visualization"
+                        children="LIME Probability Explained"
                         ),
                 dcc.Graph(id=self.html_id),
 

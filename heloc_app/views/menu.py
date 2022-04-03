@@ -1,5 +1,5 @@
 from dash import dcc, html
-from ..config import graph_type, columns, color_type,col_group
+from ..config import graph_type, columns, color_type,col_group,colorssc
 
 
 def generate_description_card():
@@ -30,8 +30,8 @@ def generate_control_card():
             html.Label("Graph Type"),
             dcc.Dropdown(
                 id="color-type-1",
-                options=[{"label": i, "value": i} for i in color_type],
-                value=color_type[0],
+                options=[{"label": i, "value": i} for i in colorssc],
+                value=colorssc[0],
                 clearable=False,
             ),
             html.Br(),
