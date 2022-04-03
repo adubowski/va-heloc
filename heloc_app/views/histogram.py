@@ -30,7 +30,7 @@ class Histogram(html.Div):
                 dcc.Graph(id=self.html_id),
             ],
         )
-    def update(self, selected_col1, selected_col2):
+    def update(self, selected_col1, selected_col2, selected_data):
         if selected_col1 != None:
             self.col1 = selected_col1
         if selected_col2 != None:
@@ -48,6 +48,26 @@ class Histogram(html.Div):
         self.fig.update_xaxes(fixedrange=True)
         self.fig.update_yaxes(fixedrange=True)
 
+        # if selected_data is None:
+        #     selected_index = self.df.index  # show all
+        #     print("No selected data histogram")
+        # else:
+        #     print("Histogram selected: ", selected_data)
+        #     selected_index = [  # show only selected indices    
+        #         x.get('pointIndex', None)
+        #         for x in selected_data['points']
+        #     ]
+        # print("first hist",self.fig.data[0])
+        # self.fig.data[0].update(
+        #     selectedpoints=selected_index,
+
+        #     # color of selected points
+        #     selected=dict(marker=dict(color="purple")),
+
+        #     # color of unselected pts
+        #     unselected=dict(marker=dict(color='rgb(200,200,200)', opacity=0.9))
+        # )
+        # print("updated hist",self.fig.data[0])
         # update titles
         self.fig.update_layout(
             xaxis_title=self.col1,

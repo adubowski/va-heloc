@@ -56,7 +56,7 @@ def get_data():
     model.fit(X_train, y_train)
     y_pred_prob = model.predict_proba(X_test)[:, 1]
     print(time.time()-start)
-    return X_test_transformed, X_test, y_test, features, y_pred_prob
+    return X_test_transformed, X_test, y_test, features, y_pred_prob, X_train, y_train, model, numerical
 
 
 def tsne(X_test):

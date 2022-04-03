@@ -20,7 +20,7 @@ class Scatterplot(html.Div):
             ],
         )
 
-    def update(self, sccolor):
+    def update(self, sccolor, selected_data):
 
         # cols = [c for c in self.df.columns if c not in ["Embedding 1","Embedding 2"]]
         df1 = self.df.copy()
@@ -46,23 +46,25 @@ class Scatterplot(html.Div):
 
         # highlight points with selection other graph
         # if selected_data is None:
+        #     print("No selected data scatterplot")
         #     selected_index = self.df.index  # show all
         # else:
+        #     print("Scatterplot selected: ", selected_data)
         #     selected_index = [  # show only selected indices
         #         x.get('pointIndex', None)
         #         for x in selected_data['points']
         #     ]
-
+        # print("first sc",self.fig.data[0])
         # self.fig.data[0].update(
         #     selectedpoints=selected_index,
 
         #     # color of selected points
-        #     selected=dict(marker=dict(color=selected_color)),
+        #     selected=dict(marker=dict(color="purple")),
 
         #     # color of unselected pts
         #     unselected=dict(marker=dict(color='rgb(200,200,200)', opacity=0.9))
         # )
-
+        # print("updated sc",self.fig.data[0])
         # update axis titles
         # self.fig.update_layout(
         #     xaxis_title=self.feature_x,
