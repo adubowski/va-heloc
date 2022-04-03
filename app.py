@@ -1,11 +1,11 @@
 from heloc_app.main import app
-from heloc_app.views.menu import generate_control_card, generate_description_card
+from heloc_app.views.menu import generate_description_card, local_interactions, data_interactions
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, tsne
-from dash import html, dash_table
+from dash import html, dash_table,dcc
 import plotly.express as px
 import pandas as pd
 from dash.dependencies import Input, Output
@@ -89,22 +89,19 @@ if __name__ == '__main__':
                 className="three columns",
                 children=[
                     generate_description_card(),
-                    generate_control_card(),
-                    # feature_selection()
+                    data_interactions(),
                 ]
             ),
 
             # Right column
             html.Div(
+                dcc.Tabs(id='tabs', value='data', children=[
+                    dcc.Tab(label='Data', value='data'),
+                    dcc.Tab(label='Local explanations', value='local exp', children=[plot1, plot3, plot2]),
+                ]),
                 id="right-column",
                 className="nine columns",
-                children=[
-                    plot1,
-                    plot3,
-                    plot2,
-                ],
             ),
-
         ],
     )
 
@@ -143,8 +140,21 @@ if __name__ == '__main__':
             data = df.to_dict('records')
             columns = [{"name": i, "id": i} for i in df.columns]
             return data, columns
-
-
+   
+    @app.callback(
+        Output("left-column", "children"),[
+        Input("tabs", "value"),
+        ]
+    )
+    def update_interactions(tab):
+        if tab == 'data':
+            children= [generate_description_card(),data_interactions()]
+        else:
+            children= [generate_description_card(),local_interactions()]
+        return children
+   
+   
+   
     # @app.callback(
     #     Output('modal', 'style'), [
     #         Input("features-button", "n_clicks")
