@@ -30,6 +30,7 @@ class Barchart(html.Div):
 
             ],
         )
+
     def update(self, selected_col1, selected_col2):
         if selected_col1 != None:
             self.col1 = selected_col1

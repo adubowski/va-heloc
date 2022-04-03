@@ -2,7 +2,7 @@ from heloc_app.main import app
 from heloc_app.views.menu import generate_control_card, generate_description_card, feature_selection
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
-from heloc_app.views.barchart import Barchart
+from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, tsne
 from dash import html, dash_table
@@ -14,7 +14,7 @@ from dice_ml import Data, Model, Dice
 
 if __name__ == '__main__':
     # Create data
-    X_test_transformed, X_test, y_test, features, y_predict_prob,X_train, y_train, model, numerical = get_data()
+    X_test_transformed, X_test, y_test, features, y_predict_prob, X_train, y_train, model, numerical = get_data()
     columns = features[features.columns[1:]].columns.tolist()
     X_embed = tsne(X_test_transformed)
     dic = {
@@ -30,14 +30,13 @@ if __name__ == '__main__':
     graph_types = {
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2", X_copy),
         "Histogram": Histogram("Histogram", columns[0], columns[1], features),
-        "Boxplot": Boxplot("Boxplot", None, None, features)
+        "Boxplot": Boxplot("Boxplot", None, None, features),
+        "LimeBarchart": LimeBarchart("LimeBarchart", X_test.index[0], X_train, X_test, model)
     }
 
 
     def counter(X_train, y_train, X_test, model, numerical, pointindex):
         # DiCE counterfactual explanations
-        
-
         df = X_train.copy()
         df['y'] = y_train.copy()
         data = Data(
@@ -49,12 +48,14 @@ if __name__ == '__main__':
         dice = Dice(data, m, method='random')
         e = dice.generate_counterfactuals(X_test.loc[[pointindex]], total_CFs=1, desired_class="opposite")
 
-        # As an improvement point for the future work in the report - 
-        # would be great if we could get counterfactual probability as well, it is a work in progress in the DiCE library
         d = json.loads(e.to_json())
         cfs_list = d['cfs_list'][0][0][:20]
         test_data = d['test_data'][0][0][:20]
-        cf_df = pd.DataFrame([test_data, cfs_list], columns=d['feature_names'], index=['Actual', 'Closest CounterFactual'])
+        cf_df = pd.DataFrame(
+            [test_data, cfs_list],
+            columns=d['feature_names'],
+            index=['Actual', 'Closest CounterFactual']
+        )
         nunique = cf_df.nunique()
         cols_to_drop = nunique[nunique == 1].index
 
@@ -62,14 +63,11 @@ if __name__ == '__main__':
         output['index'] = output.index.tolist()
         return output
 
-
-
-
     # Initialization
     plot1 = graph_types.get("Scatterplot")
     df = counter(X_train, y_train, X_test, model, numerical, X_test.index[6])
-    plot2 = dash_table.DataTable(data=df.to_dict('records'),columns=[{"name": i, "id": i} for i in df.columns])
-    #Histogram("Histogram", columns[0], columns[1], features)
+    plot2 = dash_table.DataTable(data=df.to_dict('records'), columns=[{"name": i, "id": i} for i in df.columns])
+    plot3 = graph_types.get("LimeBarchart")
 
     app.layout = html.Div(
         id="app-container",
@@ -91,6 +89,7 @@ if __name__ == '__main__':
                 className="nine columns",
                 children=[
                     plot1,
+                    plot3,
                     plot2,
                 ],
             ),
@@ -110,6 +109,14 @@ if __name__ == '__main__':
     def update_first(sccolor, selected_data, clicked_data):
         return plot1.update(sccolor, selected_data)
 
+    # Define interactions
+    @app.callback(
+        Output(plot3.html_id, "figure"), [
+        Input("color-type-1", "value"),
+        ])
+    def update_third(value):
+        value = value
+        return plot3.update(X_test.index[0])
 
     # @app.callback(
     #     Output(plot2.html_id, "figure"), 
@@ -149,7 +156,6 @@ if __name__ == '__main__':
             print("here")
             return {"display": "block"}
         return {"display": "none"}
-
 
     # Close modal by resetting info_button click to 0
     @app.callback(Output('features-button', 'n_clicks'),
