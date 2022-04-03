@@ -5,7 +5,7 @@ from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, tsne
-from dash import html, dash_table
+from dash import html, dash_table, dcc
 import plotly.express as px
 import pandas as pd
 from dash.dependencies import Input, Output
@@ -48,14 +48,12 @@ if __name__ == '__main__':
         dice = Dice(data, m, method='random')
         e = dice.generate_counterfactuals(X_test.loc[[pointindex]], total_CFs=1, desired_class="opposite")
 
+        # As an improvement point for the future work in the report - 
+        # would be great if we could get counterfactual probability as well, it is a work in progress in the DiCE library
         d = json.loads(e.to_json())
         cfs_list = d['cfs_list'][0][0][:20]
         test_data = d['test_data'][0][0][:20]
-        cf_df = pd.DataFrame(
-            [test_data, cfs_list],
-            columns=d['feature_names'],
-            index=['Actual', 'Closest CounterFactual']
-        )
+        cf_df = pd.DataFrame([test_data, cfs_list], columns=d['feature_names'], index=['Actual', 'Closest CounterFactual'])
         nunique = cf_df.nunique()
         cols_to_drop = nunique[nunique == 1].index
 
@@ -85,17 +83,24 @@ if __name__ == '__main__':
 
             # Right column
             html.Div(
+                dcc.Tabs(id='tabs', value='data', children=[
+                    dcc.Tab(label='Data', value='data'),
+                    dcc.Tab(label='Local explanations', value='local exp', children=[plot1, plot3, plot2]),
+                ]),
                 id="right-column",
                 className="nine columns",
-                children=[
-                    plot1,
-                    plot3,
-                    plot2,
-                ],
             ),
         ],
     )
 
+    #@app.callback(Output('right-column', 'children'),
+     #           Input('tabs', 'value'))
+
+    #@app.callback(Output(plot1.html_id, "figure"),
+                #Input('data', 'value'))
+
+    #@app.callback(Output(plot2, "figure"),
+     #           Input('data', 'value'))
     # Define interactions
     @app.callback(
         Output(plot1.html_id, "figure"), [
@@ -104,7 +109,6 @@ if __name__ == '__main__':
             # Input("columns-2", "value"),
         Input(plot1.html_id, 'selectedData'),
         Input(plot1.html_id, "clickData"),
-
         ])
     def update_first(sccolor, selected_data, clicked_data):
         return plot1.update(sccolor, selected_data)
@@ -179,5 +183,12 @@ if __name__ == '__main__':
     def close_feature(n):
         return 0
 
+    def render_content(tab):
+        if tab == 'data':
+            return html.Div([
+            ])
+        elif tab == 'local exp':
+            return html.Div([
+            ])
 
     app.run_server(debug=False, dev_tools_ui=False)
