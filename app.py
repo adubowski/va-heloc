@@ -21,11 +21,11 @@ simplefilter(action='ignore', category=UserWarning)
 if __name__ == '__main__':
     # Create data
     X_test_transformed, X_test, y_test, features, y_predict_prob, X_train, y_train, \
-        model, numerical = get_data()
+    model, numerical = get_data()
     columns = features[features.columns[1:]].columns.tolist()
     X_embed = tsne(X_test_transformed)
     dic = {
-        "y_test": y_test,
+        "y_test": y_test.astype(str),
         "y_predict": y_predict_prob,
         "Embedding 1": X_embed[:, 0],
         "Embedding 2": X_embed[:, 1]
@@ -42,6 +42,7 @@ if __name__ == '__main__':
         "Boxplot": Boxplot("Boxplot", features),
         "Histogram": Histogram("Histogram", columns[0], columns[1], features),
     }
+
 
     def counter(X_train, y_train, X_test, model, numerical, pointindex):
         # DiCE counterfactual explanations
@@ -99,7 +100,7 @@ if __name__ == '__main__':
 
             # Right column
             html.Div(
-                dcc.Tabs(id='tabs', value='data', children=[
+                dcc.Tabs(id='tabs', value='Local explanations', children=[
                     dcc.Tab(label='Local explanations', value='local exp', children=[plot1, plot3, plot2]),
                     dcc.Tab(label='Data', value='data', children=[data_plot]),
                 ]),
@@ -109,6 +110,7 @@ if __name__ == '__main__':
         ],
     )
 
+
     # Define interactions
     @app.callback(
         Output(plot1.html_id, "figure"), [
@@ -117,41 +119,42 @@ if __name__ == '__main__':
     def update_first(sccolor):
         return plot1.update(sccolor)
 
+
     # Define interactions
     @app.callback(
         Output(data_plot.html_id, "figure"),
         Output("div-hist", "style"),
         Output("div-color", "style"),
-        Output("div-group", "style"),  [
-        Input("color-selector-data", "value"),
-        Input("graph-type-2", "value"),
-        Input("group-type-2", "value"),
-        Input("columns-3", "value"),
-        Input("columns-4", "value"),
+        Output("div-group", "style"), [
+            Input("color-selector-data", "value"),
+            Input("graph-type-2", "value"),
+            Input("group-type-2", "value"),
+            Input("columns-3", "value"),
+            Input("columns-4", "value"),
         ])
     def update_data_plot(sccolor, graph, group, col_x, col_y):
         data_plot = graph_types.get(graph)
-        
+
         show = {"display": "block"}
         hide = {"display": "none"}
 
         if group == 'Number of':
             cols = [
-            "NumTrades60Ever/DerogPubRec",
-            "NumTradesOpeninLast12M",
-            "NumInqLast6M",
-            "NumRevolvingTradesWBalance",
-            "NumInstallTradesWBalance",
-            "NumBank/NatlTradesWHighUtilization",
-            "NumSatisfactoryTrades"
-        ]
+                "NumTrades60Ever/DerogPubRec",
+                "NumTradesOpeninLast12M",
+                "NumInqLast6M",
+                "NumRevolvingTradesWBalance",
+                "NumInstallTradesWBalance",
+                "NumBank/NatlTradesWHighUtilization",
+                "NumSatisfactoryTrades"
+            ]
         elif group == 'Number of months':
             cols = [
-            "MSinceOldestTradeOpen",
-            "MSinceMostRecentTradeOpen",
-            "AverageMInFile",
-            "MSinceMostRecentDelq",
-            "MSinceMostRecentInqexcl7days",
+                "MSinceOldestTradeOpen",
+                "MSinceMostRecentTradeOpen",
+                "AverageMInFile",
+                "MSinceMostRecentDelq",
+                "MSinceMostRecentInqexcl7days",
             ]
         elif group == 'Percentage':
             cols = [
@@ -166,12 +169,13 @@ if __name__ == '__main__':
             ]
 
         if graph == "Scatterplot Matrix":
-            return data_plot.update(cols, sccolor),hide,show,show
+            return data_plot.update(cols, sccolor), hide, show, show
         elif graph == "Histogram":
-            return data_plot.update(col_x, col_y),show,hide,hide
-        else: # Boxplot
-            return data_plot.update(cols),hide,hide,show
-    
+            return data_plot.update(col_x, col_y), show, hide, hide
+        else:  # Boxplot
+            return data_plot.update(cols), hide, hide, show
+
+
     # Define interactions
     @app.callback(
         Output(plot3.html_id, "figure"),

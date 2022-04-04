@@ -15,7 +15,7 @@ class Scatterplot(html.Div):
         super().__init__(
             className="graph_card",
             children=[
-                html.H6(name),
+                html.H6(name + " - 1 stands for Good RiskPerformance"),
                 dcc.Graph(id=self.html_id)
             ],
         )
@@ -28,6 +28,7 @@ class Scatterplot(html.Div):
             hover_data=self.df.columns,
             custom_data=[self.df.index],
             color=sccolor,
+            color_continuous_scale="redor"
         )
 
         # x_values = self.df[self.feature_x]
