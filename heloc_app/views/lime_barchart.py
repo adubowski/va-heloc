@@ -27,7 +27,7 @@ class LimeBarchart(html.Div):
                         ),
                 dcc.Graph(id=self.html_id),
                 html.H6(id="Counterfactuals",
-                        children="Counterfactual Explanations - What change is needed to achieve the opposite outcome?"
+                        children="DiCE Counterfactual Explanations - What change is needed to achieve the opposite outcome?"
                         ),
             ],
         )
@@ -64,7 +64,10 @@ class LimeBarchart(html.Div):
         self.fig.update_layout(
             yaxis_zeroline=False,
             xaxis_zeroline=False,
-            dragmode='select'
+            dragmode='select',
+            width=1500,
+            height=400,
+            hovermode='closest',
         )
         self.fig.update_xaxes(fixedrange=True)
         self.fig.update_yaxes(fixedrange=True)

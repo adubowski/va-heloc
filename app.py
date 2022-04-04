@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
             # Right column
             html.Div(
-                dcc.Tabs(id='tabs', value='Local explanations', children=[
+                dcc.Tabs(id='tabs', value='local exp', children=[
                     dcc.Tab(label='Local explanations', value='local exp', children=[plot1, plot3, plot2]),
                     dcc.Tab(label='Data', value='data', children=[data_plot]),
                 ]),

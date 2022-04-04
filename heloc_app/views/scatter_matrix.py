@@ -38,8 +38,8 @@ class DataScatterMatrix(html.Div):
             yaxis_zeroline=False,
             xaxis_zeroline=False,
             dragmode='select',
-            width=1600,
-            height=1100,
+            width=1500, # TODO: Change to dynamic resolution
+            height=900,
             hovermode='closest',
         )
         self.fig.update_xaxes(fixedrange=True)
