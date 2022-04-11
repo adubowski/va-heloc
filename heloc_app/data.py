@@ -42,7 +42,7 @@ def get_data():
         features[cat] = features[cat].astype("category")
 
     # model
-    model = RandomForestClassifier(n_estimators=200)
+    model = RandomForestClassifier(n_estimators=200, n_jobs=-1)
 
     num_pipe = make_pipeline(SimpleImputer(strategy='mean'), StandardScaler())
     cat_pipe = make_pipeline(SimpleImputer(strategy='most_frequent'), OrdinalEncoder())
