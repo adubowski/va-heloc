@@ -1,14 +1,11 @@
-# Here you can add any global configuations
-import pandas as pd
+from .data import get_data
 
-features = pd.read_csv('heloc_model/heloc_dataset_v1.csv')
-to_remove = ['NumTotalTrades', 'NumTrades90Ever/DerogPubRec', 'NumInqLast6Mexcl7days']
-features = features.drop(to_remove, axis=1)
+features = get_data()
+DATA_COLS = features[features.columns[1:]].columns.tolist()
+Y_COLS = ["y_predict", "y_test"]
 
-graph_type = ["Scatterplot Matrix", "Histogram", "Boxplot"]
-columns = features[features.columns[1:]].columns.tolist()
-color_type = ["y_test", "y_predict"]
-col_group = ["Trade", "Inquiry", "Delinquency"]
+SSC_COLS = Y_COLS + DATA_COLS
+GROUP_TYPES = ['Number of', 'Number of months', 'Percentage', 'Net Fraction']
 
-colorssc = color_type + columns
-group_type = ['Number of', 'Number of months', 'Percentage', 'Net Fraction']
+GRAPH_TYPES = ["Scatterplot Matrix", "Histogram", "Boxplot"]
+COL_GROUPS = ["Trade", "Inquiry", "Delinquency"]

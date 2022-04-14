@@ -1,5 +1,5 @@
 from dash import dcc, html
-from ..config import graph_type, columns, color_type, col_group, colorssc, group_type
+from ..config import GRAPH_TYPES, DATA_COLS, SSC_COLS, GROUP_TYPES
 
 
 def generate_description_card():
@@ -12,8 +12,10 @@ def generate_description_card():
             html.H5("HELOC Group 22"),
             html.Div(
                 id="intro",
-                children="Analyse local predictions of the model with the following columns. "
-                         "Select a point and wait a couple of seconds to see local and counterfactual explanations.",
+                children="Analyse local predictions of the model "
+                         "with the following DATA_COLS. "
+                         "Select a point and wait a couple of seconds "
+                         "to see local and counterfactual explanations.",
             ),
         ],
     )
@@ -26,15 +28,16 @@ def local_interactions():
     return html.Div(
         id="control-card",
         children=[
-            html.Label("Select column for coloring:"),
+            html.Label("Select DATA_COLS for coloring:"),
             dcc.Dropdown(
                 id="color-type-1",
-                options=[{"label": i, "value": i} for i in colorssc],
-                value=colorssc[0],
+                options=[{"label": i, "value": i} for i in SSC_COLS],
+                value=SSC_COLS[0],
                 clearable=False,
             ),
         ], style={"textAlign": "float-left"}
     )
+
 
 def data_interactions():
     """
@@ -45,54 +48,57 @@ def data_interactions():
         children=[
             html.Label("Select plot type:"),
             dcc.Dropdown(
-            id="graph-type-2",
-            options=[{"label": i, "value": i} for i in graph_type],
-            value=graph_type[0],
-            clearable=False,
+                id="graph-type-2",
+                options=[{"label": i, "value": i} for i in GRAPH_TYPES],
+                value=GRAPH_TYPES[0],
+                clearable=False,
             ),
             html.Div(
-                id = "div-color",
-                children= [
+                id="div-color",
+                children=[
                     html.Br(),
-                    html.Label("Select column for coloring:"),
+                    html.Label("Select DATA_COLS for coloring:"),
                     dcc.Dropdown(
                         id="color-selector-data",
-                        options=[{"label": i, "value": i} for i in columns],
-                        value=columns[0],
+                        options=[{"label": i, "value": i} for i in DATA_COLS],
+                        value=DATA_COLS[0],
                         clearable=False,
                     ),
                 ]
             ),
             html.Div(
-                id = "div-group",
-                children = [
+                id="div-group",
+                children=[
                     html.Br(),
                     html.Label("Select data group type:"),
                     dcc.Dropdown(
-                    id="group-type-2",
-                    options=[{"label": i, "value": i} for i in group_type],
-                    value=group_type[0],
-                    clearable=False,
+                        id="group-type-2",
+                        options=[{
+                            "label": i,
+                            "value": i
+                        } for i in GROUP_TYPES],
+                        value=GROUP_TYPES[0],
+                        clearable=False,
                     ),
                 ]
             ),
-            
-            ########### Histogram Div #########
+
+            # Histogram
             html.Div(
-                id = "div-hist",
-                children = [
-                    html.Label("Select column for x axis:"),
+                id="div-hist",
+                children=[
+                    html.Label("Select DATA_COLS for x axis:"),
                     dcc.Dropdown(
-                        id="columns-3",
-                        options=[{"label": i, "value": i} for i in columns],
-                        value=columns[0],
+                        id="DATA_COLS-3",
+                        options=[{"label": i, "value": i} for i in DATA_COLS],
+                        value=DATA_COLS[0],
                         clearable=False,
                     ),
-                    html.Label("Select column for y axis:"),
+                    html.Label("Select DATA_COLS for y axis:"),
                     dcc.Dropdown(
-                        id="columns-4",
-                        options=[{"label": i, "value": i} for i in columns],
-                        value=columns[1],
+                        id="DATA_COLS-4",
+                        options=[{"label": i, "value": i} for i in DATA_COLS],
+                        value=DATA_COLS[1],
                         clearable=False,
                     ),
                 ],
@@ -101,13 +107,14 @@ def data_interactions():
         ], style={"textAlign": "float-left"}
     )
 
+
 def feature_selection():
     return html.Div([  # modal div
-                html.Div([  # content div
-                    html.Div([
+        html.Div([  # content div
+            html.Div([
                 'Feature Selection Menu',
             ]),
-            dcc.Checklist(columns,[]),
+            dcc.Checklist(DATA_COLS, []),
             html.Br(),
             html.Button('Close', id='modal-close-button')
         ],

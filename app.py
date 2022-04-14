@@ -1,32 +1,38 @@
+from sklearn.manifold import TSNE
+
 from heloc_app.main import app
-from heloc_app.views.menu import generate_description_card, local_interactions, data_interactions
+from heloc_app.views.menu import generate_description_card, \
+    local_interactions, data_interactions
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.scatter_matrix import DataScatterMatrix
 from heloc_app.views.histogram import Histogram
-from heloc_app.data import get_data, tsne
+from heloc_app.data import get_data, get_fitted_model, get_predictions, \
+    get_counterfactual_df, get_x_y
 from dash import html, dash_table, dcc
-import plotly.express as px
-import pandas as pd
 from dash.dependencies import Input, Output
-import json
-from dice_ml import Data, Model, Dice
+from heloc_app.config import DATA_COLS
 # ignore known warnings
 from warnings import simplefilter
+import time
 
 simplefilter(action='ignore', category=FutureWarning)
 simplefilter(action='ignore', category=UserWarning)
 
 if __name__ == '__main__':
+    start = time.time()
     # Create data
-    X_test_transformed, X_test, y_test, features, y_predict_prob, X_train, y_train, \
-    model, numerical = get_data()
-    columns = features[features.columns[1:]].columns.tolist()
-    X_embed = tsne(X_test_transformed)
+    features = get_data()
+    X_test_transformed, X_test, y_test, X_train, y_train, numerical = \
+        get_x_y(features)
+    model = get_fitted_model(X_train, y_train)
+    y_pred, y_pred_prob = get_predictions(model, X_test)
+    X_embed = TSNE(n_components=2, learning_rate='auto', init='pca') \
+        .fit_transform(X_test)
     dic = {
+        "y_predict": y_pred_prob,
         "y_test": y_test.astype(str),
-        "y_predict": y_predict_prob,
         "Embedding 1": X_embed[:, 0],
         "Embedding 2": X_embed[:, 1]
     }
@@ -35,51 +41,26 @@ if __name__ == '__main__':
         X_copy[i] = k
 
     graph_types = {
-        "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2", X_copy),
-        "LimeBarchart": LimeBarchart("LimeBarchart", X_test.index[0], X_train, X_test, model),
-        ###### For Data tab
-        "Scatterplot Matrix": DataScatterMatrix("DataScatterMatrix", features, model),
+        # Local Explanations tab
+        "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2",
+                                   X_copy),
+        "LimeBarchart": LimeBarchart("LimeBarchart", X_test.index[0], X_train,
+                                     X_test, model),
+        # Data tab
+        "Scatterplot Matrix": DataScatterMatrix("DataScatterMatrix", features,
+                                                model),
         "Boxplot": Boxplot("Boxplot", features),
-        "Histogram": Histogram("Histogram", columns[0], columns[1], features),
+        "Histogram": Histogram("Histogram", DATA_COLS[0], DATA_COLS[1],
+                               features),
     }
-
-
-    def counter(X_train, y_train, X_test, model, numerical, pointindex):
-        # DiCE counterfactual explanations
-        df = X_train.copy()
-        df['y'] = y_train.copy()
-        data = Data(
-            dataframe=df,
-            continuous_features=numerical,
-            outcome_name='y'
-        )
-        m = Model(model=model, backend='sklearn')
-        dice = Dice(data, m, method='random')
-        e = dice.generate_counterfactuals(X_test.loc[[pointindex]], total_CFs=1,
-                                          desired_class="opposite")
-
-        d = json.loads(e.to_json())
-        cfs_list = d['cfs_list'][0][0][:20]
-        test_data = d['test_data'][0][0][:20]
-        cf_df = pd.DataFrame(
-            [test_data, cfs_list],
-            columns=d['feature_names'],
-            index=['Actual', 'Closest CounterFactual']
-        )
-        nunique = cf_df.nunique()
-        cols_to_drop = nunique[nunique == 1].index
-
-        output = cf_df.drop(cols_to_drop, axis=1)
-        output['index'] = output.index.tolist()
-        return output
-
 
     # Initialization
     plot1 = graph_types.get("Scatterplot")
-    df = counter(X_train, y_train, X_test, model, numerical, X_test.index[0])
+    cf_df = get_counterfactual_df(X_train, y_train, model, numerical, X_test,
+                                  X_test.index[0])
     plot2 = dash_table.DataTable(
-        data=df.to_dict('records'),
-        columns=[{"name": i, "id": i} for i in df.columns],
+        data=cf_df.to_dict('records'),
+        columns=[{"name": i, "id": i} for i in cf_df.columns],
         id='tbl'
     )
     plot3 = graph_types.get("LimeBarchart")
@@ -100,8 +81,9 @@ if __name__ == '__main__':
 
             # Right column
             html.Div(
-                dcc.Tabs(id='tabs', value='local exp', children=[
-                    dcc.Tab(label='Local explanations', value='local exp', children=[plot1, plot3, plot2]),
+                dcc.Tabs(id='tabs', value='local_exp', children=[
+                    dcc.Tab(label='Local explanations', value='local_exp',
+                            children=[plot1, plot3, plot2]),
                     dcc.Tab(label='Data', value='data', children=[data_plot]),
                 ]),
                 id="right-column",
@@ -110,17 +92,14 @@ if __name__ == '__main__':
         ],
     )
 
-
     # Define interactions
     @app.callback(
         Output(plot1.html_id, "figure"), [
             Input("color-type-1", "value"),
         ])
-    def update_first(sccolor):
-        return plot1.update(sccolor)
+    def update_first(selected_color):
+        return plot1.update(selected_color)
 
-
-    # Define interactions
     @app.callback(
         Output(data_plot.html_id, "figure"),
         Output("div-hist", "style"),
@@ -132,9 +111,9 @@ if __name__ == '__main__':
             Input("columns-3", "value"),
             Input("columns-4", "value"),
         ])
-    def update_data_plot(sccolor, graph, group, col_x, col_y):
+    def update_data_plot(selected_color, graph, group, col_x, col_y):
         data_plot = graph_types.get(graph)
-
+        cols = DATA_COLS
         show = {"display": "block"}
         hide = {"display": "none"}
 
@@ -169,14 +148,12 @@ if __name__ == '__main__':
             ]
 
         if graph == "Scatterplot Matrix":
-            return data_plot.update(cols, sccolor), hide, show, show
+            return data_plot.update(cols, selected_color), hide, show, show
         elif graph == "Histogram":
             return data_plot.update(col_x, col_y), show, hide, hide
         else:  # Boxplot
             return data_plot.update(cols), hide, hide, show
 
-
-    # Define interactions
     @app.callback(
         Output(plot3.html_id, "figure"),
         [Input(plot1.html_id, "clickData")]
@@ -188,7 +165,6 @@ if __name__ == '__main__':
             return plot3.update(clicked['points'][0].get('customdata')[0])
         return plot3.update(X_test.index[0])
 
-
     @app.callback(
         Output("tbl", "data"),
         Output("tbl", "columns"), [
@@ -197,14 +173,19 @@ if __name__ == '__main__':
     )
     def update_table(clicked):
         if clicked is not None:
-            print("Update data table")
+            print("Data table updated")
             print(clicked)
-            df = counter(X_train, y_train, X_test, model, numerical,
-                         clicked['points'][0].get('customdata')[0])
-            data = df.to_dict('records')
-            columns = [{"name": i, "id": i} for i in df.columns]
-            return data, columns
-
+            cf_df = get_counterfactual_df(
+                X_train,
+                y_train,
+                X_test,
+                model,
+                numerical,
+                clicked['points'][0].get('customdata')[0]
+            )
+            data = cf_df.to_dict('records')
+            cols = [{"name": i, "id": i} for i in cf_df.columns]
+            return data, cols
 
     @app.callback(
         Output("left-column", "children"), [
@@ -218,7 +199,7 @@ if __name__ == '__main__':
             children = [generate_description_card(), local_interactions()]
         return children
 
-
+    # TODO: Implement feature selection
     # @app.callback(
     #     Output('modal', 'style'), [
     #         Input("features-button", "n_clicks")
@@ -236,4 +217,5 @@ if __name__ == '__main__':
     # def close_feature(n):
     #     return 0
 
+    print("App startup time (s): ", time.time() - start)
     app.run_server(debug=False, dev_tools_ui=False)

@@ -1,7 +1,5 @@
 from dash import dcc, html
-from numpy import size
 import plotly.express as px
-import plotly.graph_objects as go
 
 
 class Scatterplot(html.Div):
@@ -10,6 +8,15 @@ class Scatterplot(html.Div):
         self.df = df
         self.feature_x = feature_x
         self.feature_y = feature_y
+        self.fig = px.scatter(
+            self.df,
+            x=self.feature_x,
+            y=self.feature_y,
+            hover_data=self.df.columns,
+            custom_data=[self.df.index],
+            color=self.df.columns[0],
+            color_continuous_scale="redor"
+        )
 
         # Equivalent to `html.Div([...])`
         super().__init__(
@@ -23,7 +30,7 @@ class Scatterplot(html.Div):
     def update(self, sccolor):
         self.fig = px.scatter(
             self.df,
-            x=self.feature_x, 
+            x=self.feature_x,
             y=self.feature_y,
             hover_data=self.df.columns,
             custom_data=[self.df.index],
@@ -31,8 +38,30 @@ class Scatterplot(html.Div):
             color_continuous_scale="redor"
         )
 
-        # x_values = self.df[self.feature_x]
-        # y_values = self.df[self.feature_y]
+        # TODO: Port voronoi background (contourf) to plotly
+        # Decision boundary using Voronoi tesselation
+        # from sklearn.neighbors import KNeighborsClassifier
+
+        # # create meshgrid
+        # res = 80
+        # X2d_xmin, X2d_xmax = np.min(X_embed[:, 0]), np.max(X_embed[:, 0])
+        # X2d_ymin, X2d_ymax = np.min(X_embed[:, 1]), np.max(X_embed[:, 1])
+        # xx, yy = np.meshgrid(np.linspace(X2d_xmin, X2d_xmax, resolution),
+        #                      np.linspace(X2d_ymin, X2d_ymax, resolution))
+        #
+        # # approximate Voronoi tesselation using KNN
+        # background_model = KNeighborsClassifier(n_neighbors=5).fit(X_embed,
+        #                                                            y_pred)
+        # voronoiBackground = background_model.predict_proba(
+        #     np.c_[xx.ravel(), yy.ravel()])[:, 1]
+        # voronoiBackground = voronoiBackground.reshape((res, res))
+        #
+        # # plot
+        # plt.contourf(xx, yy, voronoiBackground, cmap='magma')
+        # plt.scatter(X_embed[:, 0], X_embed[:, 1], c=y_pred_prob, s=5,
+        #             cmap='magma')
+        # plt.colorbar()
+
         self.fig.update_traces(mode='markers', marker_size=5)
         self.fig.update_layout(
             yaxis_zeroline=False,
@@ -41,32 +70,5 @@ class Scatterplot(html.Div):
         )
         self.fig.update_xaxes(visible=False, showticklabels=False)
         self.fig.update_yaxes(visible=False, showticklabels=False)
-
-        # highlight points with selection other graph
-        # if selected_data is None:
-        #     print("No selected data scatterplot")
-        #     selected_index = self.df.index  # show all
-        # else:
-        #     print("Scatterplot selected: ", selected_data)
-        #     selected_index = [  # show only selected indices
-        #         x.get('pointIndex', None)
-        #         for x in selected_data['points']
-        #     ]
-        # print("first sc",self.fig.data[0])
-        # self.fig.data[0].update(
-        #     selectedpoints=selected_index,
-
-        #     # color of selected points
-        #     selected=dict(marker=dict(color="purple")),
-
-        #     # color of unselected pts
-        #     unselected=dict(marker=dict(color='rgb(200,200,200)', opacity=0.9))
-        # )
-        # print("updated sc",self.fig.data[0])
-        # update axis titles
-        # self.fig.update_layout(
-        #     xaxis_title=self.feature_x,
-        #     yaxis_title=self.feature_y,
-        # )
 
         return self.fig

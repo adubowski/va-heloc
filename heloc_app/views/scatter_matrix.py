@@ -1,8 +1,5 @@
-import pandas as pd
 from dash import dcc, html
 import plotly.express as px
-from lime.lime_tabular import LimeTabularExplainer
-from sklearn.model_selection import cross_val_predict
 
 
 class DataScatterMatrix(html.Div):
@@ -38,7 +35,7 @@ class DataScatterMatrix(html.Div):
             yaxis_zeroline=False,
             xaxis_zeroline=False,
             dragmode='select',
-            width=1500, # TODO: Change to dynamic resolution
+            width=1500,  # TODO: Change to dynamic resolution
             height=900,
             hovermode='closest',
         )

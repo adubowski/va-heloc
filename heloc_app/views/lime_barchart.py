@@ -27,13 +27,15 @@ class LimeBarchart(html.Div):
                         ),
                 dcc.Graph(id=self.html_id),
                 html.H6(id="Counterfactuals",
-                        children="DiCE Counterfactual Explanations - What change is needed to achieve the opposite outcome?"
+                        children="DiCE Counterfactual Explanations - What "
+                                 "change is needed to achieve the opposite "
+                                 "outcome?"
                         ),
             ],
         )
 
     def update(self, point):
-        if point != None:
+        if not point:
             self.point = point
 
         explainer = LimeTabularExplainer(
@@ -42,11 +44,13 @@ class LimeBarchart(html.Div):
             feature_names=self.X_train.columns,
             verbose=True
         )
-        exp = explainer.explain_instance(self.X_test.loc[point], self.model.predict_proba)
+        exp = explainer.explain_instance(self.X_test.loc[point],
+                                         self.model.predict_proba)
 
         explanations = [e[0] for e in exp.as_list()]
         prob_values = [e[1] for e in exp.as_list()]
-        impact = ['positive' if e[1] > 0 else 'negative' for e in exp.as_list()]
+        impact = ['Higher RiskPerformance Score' if e[1] > 0
+                  else 'Lower RiskPerformance Score' for e in exp.as_list()]
 
         d = {
             "Explanation": explanations,
