@@ -1,11 +1,12 @@
 from heloc_app.main import app
-from heloc_app.views.menu import generate_description_card, local_interactions, data_interactions
+from heloc_app.views.menu import generate_description_card, local_interactions, data_interactions, feature_selection
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.scatter_matrix import DataScatterMatrix
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, tsne
+from heloc_app.config import columns, colorssc
 from dash import html, dash_table, dcc
 import plotly.express as px
 import pandas as pd
@@ -21,19 +22,23 @@ simplefilter(action='ignore', category=UserWarning)
 if __name__ == '__main__':
     # Create data
     X_test_transformed, X_test, y_test, features, y_predict_prob, X_train, y_train, \
-    model, numerical = get_data()
-    columns = features[features.columns[1:]].columns.tolist()
-    X_embed = tsne(X_test_transformed)
-    dic = {
-        "y_test": y_test.astype(str),
-        "y_predict": y_predict_prob,
-        "Embedding 1": X_embed[:, 0],
-        "Embedding 2": X_embed[:, 1]
-    }
-    X_copy = X_test.copy()
-    for i, k in dic.items():
-        X_copy[i] = k
+    model, numerical = get_data(columns)
+    #columns = features[features.columns[1:]].columns.tolist()
+   
+    def create_df(X_test_transformed, X_test, y_test, y_predict_prob):
+        X_embed = tsne(X_test_transformed)
+        dic = {
+            "y_test": y_test.astype(str),
+            "y_predict": y_predict_prob,
+            "Embedding 1": X_embed[:, 0],
+            "Embedding 2": X_embed[:, 1]
+        }
+        X_copy = X_test.copy()
+        for i, k in dic.items():
+            X_copy[i] = k
+        return X_copy
 
+    X_copy = create_df(X_test_transformed, X_test, y_test, y_predict_prob)
     graph_types = {
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2", X_copy),
         "LimeBarchart": LimeBarchart("LimeBarchart", X_test.index[0], X_train, X_test, model),
@@ -113,11 +118,30 @@ if __name__ == '__main__':
 
     # Define interactions
     @app.callback(
-        Output(plot1.html_id, "figure"), [
+        Output(plot1.html_id, "figure"),
+        Output("color-type-1", "options"), 
+        [
             Input("color-type-1", "value"),
+            Input('modal-close-button', 'n_clicks'),
+            Input("features-button", "n_clicks"),
+            Input('f-checklist', 'value'),
         ])
-    def update_first(sccolor):
-        return plot1.update(sccolor)
+    def update_first(sccolor, close, features, cols):
+        if close == 0:
+            options = [{"label": i, "value": i} for i in colorssc]
+            return plot1.update(sccolor, X_copy), options
+        else:
+            if close == features: # if number of clicks of features and close button are equal
+                print("cols: " + str(cols))
+                X_test_transformed, X_test, y_test, features, y_predict_prob, X_train, y_train, \
+                model, numerical = get_data(cols)
+                
+                new_df = create_df(X_test_transformed, X_test, y_test, y_predict_prob)
+                
+                cols_dropdown = ['y_test', 'y_predict'] + cols
+                options = [{"label": i, "value": i} for i in cols_dropdown]
+            #else returns error since it doesn't reach new df
+            return plot1.update(sccolor, new_df), options
 
 
     # Define interactions
@@ -197,13 +221,16 @@ if __name__ == '__main__':
     )
     def update_table(clicked):
         if clicked is not None:
-            print("Update data table")
-            print(clicked)
+            #print("Update data table")
+            #print(clicked)
             df = counter(X_train, y_train, X_test, model, numerical,
                          clicked['points'][0].get('customdata')[0])
-            data = df.to_dict('records')
-            columns = [{"name": i, "id": i} for i in df.columns]
-            return data, columns
+        else:
+            df = counter(X_train, y_train, X_test, model, numerical, X_test.index[0])
+        data = df.to_dict('records')
+        columns = [{"name": i, "id": i} for i in df.columns]
+        return data, columns
+        #else
 
 
     @app.callback(
@@ -215,25 +242,21 @@ if __name__ == '__main__':
         if tab == 'data':
             children = [generate_description_card(), data_interactions()]
         else:
-            children = [generate_description_card(), local_interactions()]
+            children = [generate_description_card(), local_interactions(), feature_selection()]
         return children
 
 
-    # @app.callback(
-    #     Output('modal', 'style'), [
-    #         Input("features-button", "n_clicks")
-    #     ])
-    # def show_feature(n):
-    #     print(n)
-    #     if n > 0:
-    #         print("here")
-    #         return {"display": "block"}
-    #     return {"display": "none"}
-    #
-    # # Close modal by resetting info_button click to 0
-    # @app.callback(Output('features-button', 'n_clicks'),
-    #               [Input('modal-close-button', 'n_clicks')])
-    # def close_feature(n):
-    #     return 0
-
+    @app.callback(
+        Output('modal', 'style'), [
+            Input("features-button", "n_clicks"),
+            Input('modal-close-button', 'n_clicks'),
+            Input('f-checklist', 'value'),
+        ])
+    def show_feature(open, close, values):
+        if open > close:
+            return {"display": "block"}
+        else:
+            print(values)
+            return {"display": "none"}
+    
     app.run_server(debug=False, dev_tools_ui=False)

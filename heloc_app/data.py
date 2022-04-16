@@ -11,9 +11,9 @@ from sklearn.manifold import TSNE
 import time
 
 
-def get_data():
+def get_data(cols):
     start = time.time()
-    # Read data
+    # Read data++9*+
     features = pd.read_csv('heloc_model/heloc_dataset_v1.csv')
 
     # Remove rows with missing values
@@ -29,10 +29,17 @@ def get_data():
     features = features.drop(to_remove, axis=1)
 
     X = features[features.columns[1:]]
+    X = X[cols] # get the input columns
+    
     y = features["RiskPerformance"]
 
     # columns categorization
-    categorical = ['MaxDelqEver', 'MaxDelq/PublicRecLast12M']
+    categorical = []
+    if 'MaxDelqEver' in X.columns.tolist():
+        categorical.append('MaxDelqEver')
+    if 'MaxDelq/PublicRecLast12M' in X.columns.tolist():
+        categorical.append('MaxDelq/PublicRecLast12M')
+
     numerical = [col for col in X.columns if col not in categorical]
     
     # Code labels
@@ -55,6 +62,7 @@ def get_data():
     model.fit(X_train, y_train)
     y_pred_prob = model.predict_proba(X_test)[:, 1]
     print(time.time()-start)
+
     return X_test_transformed, X_test, y_test, features, y_pred_prob, X_train, y_train, model, numerical
 
 

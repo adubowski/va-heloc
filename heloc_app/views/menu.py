@@ -33,6 +33,8 @@ def local_interactions():
                 value=colorssc[0],
                 clearable=False,
             ),
+            html.Br(),
+            html.Button('Select Features', id='features-button', n_clicks=0),
         ], style={"textAlign": "float-left"}
     )
 
@@ -107,9 +109,9 @@ def feature_selection():
                     html.Div([
                 'Feature Selection Menu',
             ]),
-            dcc.Checklist(columns,[]),
+            dcc.Checklist(id = "f-checklist", options = columns, value = columns),
             html.Br(),
-            html.Button('Close', id='modal-close-button')
+            html.Button('Close', id='modal-close-button', n_clicks=0)
         ],
             style={'textAlign': 'center', },
             className='modal-content',
