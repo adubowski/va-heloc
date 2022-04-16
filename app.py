@@ -2,7 +2,7 @@ from sklearn.manifold import TSNE
 
 from heloc_app.main import app
 from heloc_app.views.menu import generate_description_card, \
-    local_interactions, data_interactions
+    local_interactions, data_interactions, feature_selection
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.lime_barchart import LimeBarchart
@@ -12,7 +12,7 @@ from heloc_app.data import get_data, get_fitted_model, get_predictions, \
     get_counterfactual_df, get_x_y
 from dash import html, dash_table, dcc
 from dash.dependencies import Input, Output
-from heloc_app.config import DATA_COLS
+from heloc_app.config import DATA_COLS, SSC_COLS
 # ignore known warnings
 from warnings import simplefilter
 import time
@@ -25,21 +25,25 @@ if __name__ == '__main__':
     # Create data
     features = get_data()
     X_test_transformed, X_test, y_test, X_train, y_train, numerical = \
-        get_x_y(features)
+        get_x_y(features, DATA_COLS)
     model = get_fitted_model(X_train, y_train)
     y_pred, y_pred_prob = get_predictions(model, X_test)
-    X_embed = TSNE(n_components=2, learning_rate='auto', init='pca') \
-        .fit_transform(X_test)
-    dic = {
-        "y_predict": y_pred_prob,
-        "y_test": y_test.astype(str),
-        "Embedding 1": X_embed[:, 0],
-        "Embedding 2": X_embed[:, 1]
-    }
-    X_copy = X_test.copy()
-    for i, k in dic.items():
-        X_copy[i] = k
+    
+    def create_df(X_test_transformed, X_test, y_test, y_pred_prob):
+        X_embed = TSNE(n_components=2, learning_rate='auto', init='pca') \
+            .fit_transform(X_test)
+        dic = {
+            "y_predict": y_pred_prob,
+            "y_test": y_test.astype(str),
+            "Embedding 1": X_embed[:, 0],
+            "Embedding 2": X_embed[:, 1]
+        }
+        X_copy = X_test.copy()
+        for i, k in dic.items():
+            X_copy[i] = k
+        return X_copy
 
+    X_copy = create_df(X_test_transformed, X_test, y_test, y_pred_prob)
     graph_types = {
         # Local Explanations tab
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2",
@@ -92,13 +96,34 @@ if __name__ == '__main__':
         ],
     )
 
-    # Define interactions
     @app.callback(
-        Output(plot1.html_id, "figure"), [
+        Output(plot1.html_id, "figure"),
+        Output("color-type-1", "options"), 
+        [
             Input("color-type-1", "value"),
+            Input('modal-close-button', 'n_clicks'),
+            Input("features-button", "n_clicks"),
+            Input('f-checklist', 'value'),
         ])
-    def update_first(selected_color):
-        return plot1.update(selected_color)
+    def update_first(sccolor, close, features, cols):
+        if close == 0:
+            options = [{"label": i, "value": i} for i in SSC_COLS]
+            return plot1.update(sccolor, X_copy), options
+        else:
+            if close == features: # if number of clicks of features and close button are equal
+                print("cols: " + str(cols))
+                features = get_data()
+                X_test_transformed, X_test, y_test, X_train, y_train, numerical = \
+                get_x_y(features, cols)
+                model = get_fitted_model(X_train, y_train)
+                y_pred, y_pred_prob = get_predictions(model, X_test)
+                new_df = create_df(X_test_transformed, X_test, y_test, y_pred_prob)
+                
+                cols_dropdown = ['y_predict', 'y_test'] + cols
+                options = [{"label": i, "value": i} for i in cols_dropdown]
+            #else returns error since it doesn't reach new df but creates no problem
+            
+            return plot1.update(sccolor, new_df), options
 
     @app.callback(
         Output(data_plot.html_id, "figure"),
@@ -183,9 +208,12 @@ if __name__ == '__main__':
                 numerical,
                 clicked['points'][0].get('customdata')[0]
             )
-            data = cf_df.to_dict('records')
-            cols = [{"name": i, "id": i} for i in cf_df.columns]
-            return data, cols
+        else: # added to get rid of errors
+            cf_df = get_counterfactual_df(X_train, y_train, model, numerical, X_test,
+                                X_test.index[0])
+        data = cf_df.to_dict('records')
+        cols = [{"name": i, "id": i} for i in cf_df.columns]
+        return data, cols
 
     @app.callback(
         Output("left-column", "children"), [
@@ -196,26 +224,21 @@ if __name__ == '__main__':
         if tab == 'data':
             children = [generate_description_card(), data_interactions()]
         else:
-            children = [generate_description_card(), local_interactions()]
+            children = [generate_description_card(), local_interactions(), feature_selection()]
         return children
 
-    # TODO: Implement feature selection
-    # @app.callback(
-    #     Output('modal', 'style'), [
-    #         Input("features-button", "n_clicks")
-    #     ])
-    # def show_feature(n):
-    #     print(n)
-    #     if n > 0:
-    #         print("here")
-    #         return {"display": "block"}
-    #     return {"display": "none"}
-    #
-    # # Close modal by resetting info_button click to 0
-    # @app.callback(Output('features-button', 'n_clicks'),
-    #               [Input('modal-close-button', 'n_clicks')])
-    # def close_feature(n):
-    #     return 0
+    @app.callback(
+        Output('modal', 'style'), [
+            Input("features-button", "n_clicks"),
+            Input('modal-close-button', 'n_clicks'),
+            Input('f-checklist', 'value'),
+        ])
+    def show_feature(open, close, values):
+        if open > close:
+            return {"display": "block"}
+        else:
+            print(values)
+            return {"display": "none"}
 
     print("App startup time (s): ", time.time() - start)
     app.run_server(debug=False, dev_tools_ui=False)

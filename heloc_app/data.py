@@ -10,7 +10,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 
 
-CATEGORICAL = ['MaxDelqEver', 'MaxDelq/PublicRecLast12M']
+
 
 
 def get_data():
@@ -33,9 +33,17 @@ def get_data():
     return features
 
 
-def get_x_y(features):
+def get_x_y(features, subset):
+    CATEGORICAL = []
     X = features[features.columns[1:]]
     y = features["RiskPerformance"]
+    
+    X = X[subset]
+    
+    if 'MaxDelqEver' in X.columns.tolist():
+        CATEGORICAL.append('MaxDelqEver')
+    if 'MaxDelq/PublicRecLast12M' in X.columns.tolist():
+        CATEGORICAL.append('MaxDelq/PublicRecLast12M')
 
     # columns categorization
     numerical = [col for col in X.columns if col not in CATEGORICAL]

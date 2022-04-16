@@ -27,13 +27,13 @@ class Scatterplot(html.Div):
             ],
         )
 
-    def update(self, sccolor):
+    def update(self, sccolor, input_df):
         self.fig = px.scatter(
-            self.df,
+            input_df,
             x=self.feature_x,
             y=self.feature_y,
-            hover_data=self.df.columns,
-            custom_data=[self.df.index],
+            hover_data=input_df.columns,
+            custom_data=[input_df.index],
             color=sccolor,
             color_continuous_scale="redor"
         )
