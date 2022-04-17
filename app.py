@@ -23,7 +23,7 @@ if __name__ == '__main__':
     # Create data
     features = get_data()
     X_test_transformed, X_test, y_test, X_train, y_train, numerical = \
-        get_x_y(features, DATA_COLS)
+        get_x_y(features)
     model = get_fitted_model(X_train, y_train)
     y_pred, y_pred_prob = get_predictions(model, X_test)
     scatterplot_X = get_scatterplot_df(X_test_transformed, X_test, y_test,
@@ -90,16 +90,17 @@ if __name__ == '__main__':
             Input("features-button", "n_clicks"),
             Input('f-checklist', 'value'),
         ])
-    def update_first(sccolor, close, features, cols):
+    def update_first(sccolor, close, selected_features, cols):
         if close == 0:
             options = [{"label": i, "value": i} for i in SSC_COLS]
             return plot1.update(sccolor, scatterplot_X), options
         else:
-            if close == features:  # if number of clicks of features and close button are equal
+            if close == selected_features:
                 print("cols: " + str(cols))
-                features = get_data()
+                # Get new train test split on selected cols
                 X_test_transformed, X_test, y_test, X_train, y_train, _ = \
                     get_x_y(features, cols)
+                # Retrain model on new data
                 model = get_fitted_model(X_train, y_train)
                 y_pred, y_pred_prob = get_predictions(model, X_test)
                 new_df = get_scatterplot_df(X_test_transformed, X_test, y_test,
@@ -107,7 +108,8 @@ if __name__ == '__main__':
 
                 cols_dropdown = ['y_predict', 'y_test'] + cols
                 options = [{"label": i, "value": i} for i in cols_dropdown]
-            # else returns error since it doesn't reach new df but creates no problem
+            # else returns error since it doesn't reach new df
+            # but creates no problem
 
             return plot1.update(sccolor, new_df), options
 

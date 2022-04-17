@@ -31,12 +31,13 @@ def get_data():
     return features
 
 
-def get_x_y(features, subset):
+def get_x_y(features, subset=None):
     CATEGORICAL = []
     X = features[features.columns[1:]]
     y = features["RiskPerformance"]
-    
-    X = X[subset]
+
+    if subset:
+        X = X[subset]
     
     if 'MaxDelqEver' in X.columns.tolist():
         CATEGORICAL.append('MaxDelqEver')
