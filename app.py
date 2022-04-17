@@ -1,5 +1,3 @@
-from sklearn.manifold import TSNE
-
 from heloc_app.main import app
 from heloc_app.views.menu import generate_description_card, \
     local_interactions, data_interactions, feature_selection
@@ -9,7 +7,7 @@ from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.scatter_matrix import DataScatterMatrix
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, get_fitted_model, get_predictions, \
-    get_counterfactual_df, get_x_y
+    get_counterfactual_df, get_x_y, get_scatterplot_df
 from dash import html, dash_table, dcc
 from dash.dependencies import Input, Output
 from heloc_app.config import DATA_COLS, SSC_COLS
@@ -28,26 +26,12 @@ if __name__ == '__main__':
         get_x_y(features, DATA_COLS)
     model = get_fitted_model(X_train, y_train)
     y_pred, y_pred_prob = get_predictions(model, X_test)
-    
-    def create_df(X_test_transformed, X_test, y_test, y_pred_prob):
-        X_embed = TSNE(n_components=2, learning_rate='auto', init='pca') \
-            .fit_transform(X_test)
-        dic = {
-            "y_predict": y_pred_prob,
-            "y_test": y_test.astype(str),
-            "Embedding 1": X_embed[:, 0],
-            "Embedding 2": X_embed[:, 1]
-        }
-        X_copy = X_test.copy()
-        for i, k in dic.items():
-            X_copy[i] = k
-        return X_copy
-
-    X_copy = create_df(X_test_transformed, X_test, y_test, y_pred_prob)
+    scatterplot_X = get_scatterplot_df(X_test_transformed, X_test, y_test,
+                                       y_pred_prob)
     graph_types = {
         # Local Explanations tab
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2",
-                                   X_copy),
+                                   scatterplot_X),
         "LimeBarchart": LimeBarchart("LimeBarchart", X_test.index[0], X_train,
                                      X_test, model),
         # Data tab
@@ -96,9 +80,10 @@ if __name__ == '__main__':
         ],
     )
 
+
     @app.callback(
         Output(plot1.html_id, "figure"),
-        Output("color-type-1", "options"), 
+        Output("color-type-1", "options"),
         [
             Input("color-type-1", "value"),
             Input('modal-close-button', 'n_clicks'),
@@ -108,22 +93,24 @@ if __name__ == '__main__':
     def update_first(sccolor, close, features, cols):
         if close == 0:
             options = [{"label": i, "value": i} for i in SSC_COLS]
-            return plot1.update(sccolor, X_copy), options
+            return plot1.update(sccolor, scatterplot_X), options
         else:
-            if close == features: # if number of clicks of features and close button are equal
+            if close == features:  # if number of clicks of features and close button are equal
                 print("cols: " + str(cols))
                 features = get_data()
-                X_test_transformed, X_test, y_test, X_train, y_train, numerical = \
-                get_x_y(features, cols)
+                X_test_transformed, X_test, y_test, X_train, y_train, _ = \
+                    get_x_y(features, cols)
                 model = get_fitted_model(X_train, y_train)
                 y_pred, y_pred_prob = get_predictions(model, X_test)
-                new_df = create_df(X_test_transformed, X_test, y_test, y_pred_prob)
-                
+                new_df = get_scatterplot_df(X_test_transformed, X_test, y_test,
+                                            y_pred_prob)
+
                 cols_dropdown = ['y_predict', 'y_test'] + cols
                 options = [{"label": i, "value": i} for i in cols_dropdown]
-            #else returns error since it doesn't reach new df but creates no problem
-            
+            # else returns error since it doesn't reach new df but creates no problem
+
             return plot1.update(sccolor, new_df), options
+
 
     @app.callback(
         Output(data_plot.html_id, "figure"),
@@ -179,6 +166,7 @@ if __name__ == '__main__':
         else:  # Boxplot
             return data_plot.update(cols), hide, hide, show
 
+
     @app.callback(
         Output(plot3.html_id, "figure"),
         [Input(plot1.html_id, "clickData")]
@@ -189,6 +177,7 @@ if __name__ == '__main__':
         if clicked is not None:
             return plot3.update(clicked['points'][0].get('customdata')[0])
         return plot3.update(X_test.index[0])
+
 
     @app.callback(
         Output("tbl", "data"),
@@ -203,17 +192,19 @@ if __name__ == '__main__':
             cf_df = get_counterfactual_df(
                 X_train,
                 y_train,
-                X_test,
                 model,
                 numerical,
+                X_test,
                 clicked['points'][0].get('customdata')[0]
             )
-        else: # added to get rid of errors
-            cf_df = get_counterfactual_df(X_train, y_train, model, numerical, X_test,
-                                X_test.index[0])
+        else:  # added to get rid of errors
+            cf_df = get_counterfactual_df(X_train, y_train, model, numerical,
+                                          X_test,
+                                          X_test.index[0])
         data = cf_df.to_dict('records')
         cols = [{"name": i, "id": i} for i in cf_df.columns]
         return data, cols
+
 
     @app.callback(
         Output("left-column", "children"), [
@@ -224,8 +215,10 @@ if __name__ == '__main__':
         if tab == 'data':
             children = [generate_description_card(), data_interactions()]
         else:
-            children = [generate_description_card(), local_interactions(), feature_selection()]
+            children = [generate_description_card(), local_interactions(),
+                        feature_selection()]
         return children
+
 
     @app.callback(
         Output('modal', 'style'), [
@@ -239,6 +232,7 @@ if __name__ == '__main__':
         else:
             print(values)
             return {"display": "none"}
+
 
     print("App startup time (s): ", time.time() - start)
     app.run_server(debug=False, dev_tools_ui=False)

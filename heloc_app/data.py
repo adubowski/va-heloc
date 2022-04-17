@@ -3,14 +3,12 @@ import json
 import pandas as pd
 from dice_ml import Model, Dice, Data
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.manifold import TSNE
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OrdinalEncoder
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-
-
-
 
 
 def get_data():
@@ -77,6 +75,21 @@ def get_fitted_model(X_train, y_train):
     model = RandomForestClassifier(n_estimators=200, n_jobs=-1)
     model.fit(X_train, y_train)
     return model
+
+
+def get_scatterplot_df(X_test_transformed, X_test, y_test, y_pred_prob):
+    X_embed = TSNE(n_components=2, learning_rate='auto', init='pca') \
+        .fit_transform(X_test_transformed)
+    dic = {
+        "y_predict": y_pred_prob,
+        "y_test": y_test.astype(str),
+        "Embedding 1": X_embed[:, 0],
+        "Embedding 2": X_embed[:, 1]
+    }
+    X_copy = X_test.copy()
+    for i, k in dic.items():
+        X_copy[i] = k
+    return X_copy
 
 
 def get_predictions(model, X_test):
