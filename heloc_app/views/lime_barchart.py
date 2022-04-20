@@ -6,10 +6,12 @@ from lime.lime_tabular import LimeTabularExplainer
 
 class LimeBarchart(html.Div):
     def __init__(self, name, point, X_train, X_test, model):
-        """
+        """Barchart presenting LIME values for a local explanation
        :param name: name of the plot
        :param point: ID of the point for which to calculate lime explanations
-       :param df: dataframe
+       :param X_train: train dataset used in the model
+       :param X_test: test dataset used in the model
+       :param model: fitted classifier model
        """
         self.html_id = name.lower().replace(" ", "-")
         self.name = name

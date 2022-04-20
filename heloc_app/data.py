@@ -170,6 +170,7 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
     df = X_train.copy()
     df['y'] = y_train.copy()
 
+    # Calculates reasonable ranges for each feature using the training dataset
     permitted_range_dict = {}
     for col in numerical:
         col_min = max(min(X_train[col]), 0)

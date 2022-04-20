@@ -6,8 +6,8 @@ from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.scatter_matrix import DataScatterMatrix
 from heloc_app.views.histogram import Histogram
-from heloc_app.data import get_data, get_fitted_model, get_predictions, \
-    get_counterfactual_df, get_x_y, get_scatterplot_df, get_numerical_cols
+from heloc_app.data import get_data, get_fitted_model, get_counterfactual_df, \
+    get_x_y, get_scatterplot_df, get_numerical_cols
 from dash import html, dash_table, dcc
 from dash.dependencies import Input, Output
 from heloc_app.config import DATA_COLS, SSC_COLS
@@ -85,7 +85,6 @@ if __name__ == '__main__':
             ),
         ],
     )
-
 
     @app.callback(
         Output(plot1.html_id, "figure"),

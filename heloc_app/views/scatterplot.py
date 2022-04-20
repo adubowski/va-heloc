@@ -74,6 +74,7 @@ class Scatterplot(html.Div):
                 y=np.linspace(X2d_ymin, X2d_ymax, res),
                 z=voronoiBackground,
                 colorscale='YlGn',
+                hoverinfo='skip',
                 line_smoothing=0.75
             )
         )
