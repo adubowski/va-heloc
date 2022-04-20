@@ -6,9 +6,9 @@ import numpy as np
 
 
 class Scatterplot(html.Div):
-    def __init__(self, name, feature_x, feature_y, df):
+    def __init__(self, name, feature_x, feature_y, input_df):
         self.html_id = name.lower().replace(" ", "-")
-        self.df = df
+        self.df = input_df
         self.feature_x = feature_x
         self.feature_y = feature_y
         self.fig = px.scatter(
@@ -19,6 +19,33 @@ class Scatterplot(html.Div):
             custom_data=[self.df.index],
             color=self.df.columns[0],
             color_continuous_scale="redor"
+        )
+        # Estimate model's decision boundary using Voronoi tesselation
+        # Source: https://stackoverflow.com/a/61225622/9994398
+
+        # create meshgrid
+        res = 80
+        X2d_xmin = np.min(input_df[self.feature_x])
+        X2d_xmax = np.max(input_df[self.feature_x])
+        X2d_ymin = np.min(input_df[self.feature_y])
+        X2d_ymax = np.max(input_df[self.feature_y])
+        xx, yy = np.meshgrid(np.linspace(X2d_xmin, X2d_xmax, res),
+                             np.linspace(X2d_ymin, X2d_ymax, res))
+
+        X_embed = input_df[[self.feature_x, self.feature_y]]
+
+        # approximate Voronoi tesselation using KNN
+        background_model = KNeighborsClassifier(n_neighbors=25).fit(
+            X_embed,
+            input_df.y_pred
+        )
+        voronoiBackground = background_model.predict_proba(
+            np.c_[xx.ravel(), yy.ravel()]
+        )[:, 1]
+        voronoiBackground = voronoiBackground.reshape((res, res))
+        # plot
+        self.fig.add_trace(
+            go.Contour(z=voronoiBackground)
         )
 
         # Equivalent to `html.Div([...])`
@@ -53,6 +80,8 @@ class Scatterplot(html.Div):
             color_continuous_scale=scplot_cmap
         )
 
+        self.fig.update_traces(mode='markers', marker_size=5)
+
         # Estimate model's decision boundary using Voronoi tesselation
         # Source: https://stackoverflow.com/a/61225622/9994398
 
@@ -76,11 +105,9 @@ class Scatterplot(html.Div):
             np.c_[xx.ravel(), yy.ravel()]
         )[:, 1]
         voronoiBackground = voronoiBackground.reshape((res, res))
-        self.fig.update_traces(mode='markers', marker_size=5)
-
         # plot
         self.fig.add_trace(
-            go.Contour(z=voronoiBackground, x=xx, y=yy, colorscale='RdYlGn')
+            go.Contour(z=voronoiBackground)
         )
 
         self.fig.update_layout(
