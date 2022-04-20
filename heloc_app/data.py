@@ -52,9 +52,9 @@ def get_x_y(features: pd.DataFrame, subset: List[str] = None) \
     if subset and len(subset) > 0:
         X = X[subset]
 
-    if 'MaxDelqEver' in X.columns.tolist():
+    if 'MaxDelqEver' in X.columns:
         categorical.append('MaxDelqEver')
-    if 'MaxDelq/PublicRecLast12M' in X.columns.tolist():
+    if 'MaxDelq/PublicRecLast12M' in X.columns:
         categorical.append('MaxDelq/PublicRecLast12M')
 
     # columns categorization
@@ -108,21 +108,24 @@ def get_fitted_model(X_train, y_train) -> RandomForestClassifier:
     return model
 
 
-def get_scatterplot_df(X_test_transformed, X_test, y_test, y_pred_prob):
+def get_scatterplot_df(X_test_transformed, X_test, y_test, model):
     """ Prepares dataset for the scatterplot using TSNE to reduce
     dimensionality of the provided transformed dataset.
 
     :param X_test_transformed: Scaled test dataset
     :param X_test: Original test dataset
     :param y_test: labels for the test data
-    :param y_pred_prob: predicted probabilities on the test data
+    :param model: model to get predicted probabilities on the test data from
     :return: Dataframe prepared for the scatterplot
     (with TSNE embeddings and original data)
     """
+    y_pred, y_pred_prob = get_predictions(model, X_test)
+
     X_embed = TSNE(n_components=2, learning_rate='auto', init='pca') \
         .fit_transform(X_test_transformed)
     dic = {
-        "y_predict": y_pred_prob,
+        "y_pred_prob": y_pred_prob,
+        "y_pred": y_pred,
         "y_test": y_test.astype(str),
         "Embedding 1": X_embed[:, 0],
         "Embedding 2": X_embed[:, 1]
@@ -196,13 +199,11 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
         columns=d['feature_names'],
         index=['Actual', 'Closest CounterFactual']
     )
-    if include_all_cols:
-        cf_df['Value'] = cf_df.index.tolist()
-        return cf_df
+    if not include_all_cols:
+        # Drop columns with the same values
+        unique_cols = cf_df.nunique()
+        cols_to_drop = unique_cols[unique_cols == 1].index
+        cf_df = cf_df.drop(cols_to_drop, axis=1)
 
-    # Drop columns with the same values
-    unique_cols = cf_df.nunique()
-    cols_to_drop = unique_cols[unique_cols == 1].index
-    output = cf_df.drop(cols_to_drop, axis=1)
-    output['Value'] = output.index.tolist()
-    return output
+    cf_df['Value'] = cf_df.index.tolist()
+    return cf_df

@@ -22,12 +22,11 @@ if __name__ == '__main__':
     start = time.time()
     # Create data
     features = get_data()
-    X_test_transformed, X_test, y_test, X_train, y_train = get_x_y(features)
+    X_transformed, X_test, y_test, X_train, y_train = get_x_y(features)
     numerical = get_numerical_cols(X_test)
     model = get_fitted_model(X_train, y_train)
-    y_pred, y_pred_prob = get_predictions(model, X_test)
-    scatterplot_X = get_scatterplot_df(X_test_transformed, X_test, y_test,
-                                       y_pred_prob)
+    scatterplot_X = get_scatterplot_df(X_transformed, X_test, y_test,
+                                       model)
     graph_types = {
         # Local Explanations tab
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2",
@@ -89,20 +88,19 @@ if __name__ == '__main__':
             Input("features-button", "n_clicks"),
             Input('f-checklist', 'value'),
         ])
-    def update_first(sccolor, close, selected_features, cols):
+    def update_first(scplt_color, close, selected_features, cols):
         if close == 0:
             options = [{"label": i, "value": i} for i in SSC_COLS]
-            return plot1.update(sccolor, scatterplot_X), options
+            return plot1.update(scplt_color, scatterplot_X), options
         elif close == selected_features:
             # Get new train test split on selected cols
             X_trans, X_test, y_test, X_train, y_train = get_x_y(features, cols)
             # Retrain model on new data
             model = get_fitted_model(X_train, y_train)
-            y_pred, y_pred_prob = get_predictions(model, X_test)
-            new_df = get_scatterplot_df(X_trans, X_test, y_test, y_pred_prob)
-            cols_dropdown = ['y_predict', 'y_test'] + cols
+            new_df = get_scatterplot_df(X_trans, X_test, y_test, model)
+            cols_dropdown = ['y_pred', 'y_pred_prob', 'y_test'] + cols
             options = [{"label": i, "value": i} for i in cols_dropdown]
-            return plot1.update(sccolor, new_df), options
+            return plot1.update(scplt_color, new_df), options
 
     @app.callback(
         Output(data_plot.html_id, "figure"),

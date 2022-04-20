@@ -1,5 +1,8 @@
 from dash import dcc, html
 import plotly.express as px
+import plotly.graph_objects as go
+from sklearn.neighbors import KNeighborsClassifier
+import numpy as np
 
 
 class Scatterplot(html.Div):
@@ -27,42 +30,59 @@ class Scatterplot(html.Div):
             ],
         )
 
-    def update(self, sccolor, input_df):
+    def update(self, scplt_color, input_df):
+
+        categorical = []
+        if 'MaxDelqEver' in input_df.columns:
+            categorical.append('MaxDelqEver')
+        if 'MaxDelq/PublicRecLast12M' in input_df.columns:
+            categorical.append('MaxDelq/PublicRecLast12M')
+
+        scplot_cmap = \
+            'RdYlGn' if scplt_color in ('y_pred_prob', 'y_pred', 'y_test') \
+            else 'Set 1' if scplt_color in categorical \
+            else 'Oranges'
+
         self.fig = px.scatter(
             input_df,
             x=self.feature_x,
             y=self.feature_y,
             hover_data=input_df.columns,
             custom_data=[input_df.index],
-            color=sccolor,
-            color_continuous_scale="redor"
+            color=scplt_color,
+            color_continuous_scale=scplot_cmap
         )
 
-        # TODO: Port voronoi background (contourf) to plotly
-        # Decision boundary using Voronoi tesselation
-        # from sklearn.neighbors import KNeighborsClassifier
+        # Estimate model's decision boundary using Voronoi tesselation
+        # Source: https://stackoverflow.com/a/61225622/9994398
 
-        # # create meshgrid
-        # res = 80
-        # X2d_xmin, X2d_xmax = np.min(X_embed[:, 0]), np.max(X_embed[:, 0])
-        # X2d_ymin, X2d_ymax = np.min(X_embed[:, 1]), np.max(X_embed[:, 1])
-        # xx, yy = np.meshgrid(np.linspace(X2d_xmin, X2d_xmax, resolution),
-        #                      np.linspace(X2d_ymin, X2d_ymax, resolution))
-        #
-        # # approximate Voronoi tesselation using KNN
-        # background_model = KNeighborsClassifier(n_neighbors=5).fit(X_embed,
-        #                                                            y_pred)
-        # voronoiBackground = background_model.predict_proba(
-        #     np.c_[xx.ravel(), yy.ravel()])[:, 1]
-        # voronoiBackground = voronoiBackground.reshape((res, res))
-        #
-        # # plot
-        # plt.contourf(xx, yy, voronoiBackground, cmap='magma')
-        # plt.scatter(X_embed[:, 0], X_embed[:, 1], c=y_pred_prob, s=5,
-        #             cmap='magma')
-        # plt.colorbar()
+        # create meshgrid
+        res = 80
+        X2d_xmin = np.min(input_df[self.feature_x])
+        X2d_xmax = np.max(input_df[self.feature_x])
+        X2d_ymin = np.min(input_df[self.feature_y])
+        X2d_ymax = np.max(input_df[self.feature_y])
+        xx, yy = np.meshgrid(np.linspace(X2d_xmin, X2d_xmax, res),
+                             np.linspace(X2d_ymin, X2d_ymax, res))
 
+        X_embed = input_df[[self.feature_x, self.feature_y]]
+
+        # approximate Voronoi tesselation using KNN
+        background_model = KNeighborsClassifier(n_neighbors=25).fit(
+            X_embed,
+            input_df.y_pred
+        )
+        voronoiBackground = background_model.predict_proba(
+            np.c_[xx.ravel(), yy.ravel()]
+        )[:, 1]
+        voronoiBackground = voronoiBackground.reshape((res, res))
         self.fig.update_traces(mode='markers', marker_size=5)
+
+        # plot
+        self.fig.add_trace(
+            go.Contour(z=voronoiBackground, x=xx, y=yy, colorscale='RdYlGn')
+        )
+
         self.fig.update_layout(
             yaxis_zeroline=False,
             xaxis_zeroline=False,
