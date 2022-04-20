@@ -93,23 +93,15 @@ if __name__ == '__main__':
         if close == 0:
             options = [{"label": i, "value": i} for i in SSC_COLS]
             return plot1.update(sccolor, scatterplot_X), options
-        else:
-            if close == selected_features:
-                print("cols: " + str(cols))
-                # Get new train test split on selected cols
-                X_test_transformed, X_test, y_test, X_train, y_train = \
-                    get_x_y(features, cols)
-                # Retrain model on new data
-                model = get_fitted_model(X_train, y_train)
-                y_pred, y_pred_prob = get_predictions(model, X_test)
-                new_df = get_scatterplot_df(X_test_transformed, X_test, y_test,
-                                            y_pred_prob)
-
-                cols_dropdown = ['y_predict', 'y_test'] + cols
-                options = [{"label": i, "value": i} for i in cols_dropdown]
-            # else returns error since it doesn't reach new df
-            # but creates no problem
-
+        elif close == selected_features:
+            # Get new train test split on selected cols
+            X_trans, X_test, y_test, X_train, y_train = get_x_y(features, cols)
+            # Retrain model on new data
+            model = get_fitted_model(X_train, y_train)
+            y_pred, y_pred_prob = get_predictions(model, X_test)
+            new_df = get_scatterplot_df(X_trans, X_test, y_test, y_pred_prob)
+            cols_dropdown = ['y_predict', 'y_test'] + cols
+            options = [{"label": i, "value": i} for i in cols_dropdown]
             return plot1.update(sccolor, new_df), options
 
     @app.callback(
@@ -171,8 +163,6 @@ if __name__ == '__main__':
         [Input(plot1.html_id, "clickData")]
     )
     def update_third(clicked):
-        print("Update LIME barchart")
-        print(clicked)
         if clicked is not None:
             return plot3.update(clicked['points'][0].get('customdata')[0])
         return plot3.update(X_test.index[0])
@@ -185,8 +175,6 @@ if __name__ == '__main__':
     )
     def update_table(clicked):
         if clicked is not None:
-            print("Data table updated")
-            print(clicked)
             cf_df = get_counterfactual_df(
                 X_train,
                 y_train,
@@ -226,7 +214,6 @@ if __name__ == '__main__':
         if open > close:
             return {"display": "block"}
         else:
-            print(values)
             return {"display": "none"}
 
     print("App startup time (s): ", time.time() - start)
