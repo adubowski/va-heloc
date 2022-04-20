@@ -1,5 +1,5 @@
 from dash import dcc, html
-from ..config import GRAPH_TYPES, DATA_COLS, SSC_COLS, GROUP_TYPES
+from ..config import GRAPH_TYPES, DATA_COLS, SSC_COLS, GROUP_TYPES, DATA_COLORS
 
 
 def generate_description_card():
@@ -62,8 +62,8 @@ def data_interactions():
                     html.Label("Select features for coloring:"),
                     dcc.Dropdown(
                         id="color-selector-data",
-                        options=[{"label": i, "value": i} for i in DATA_COLS],
-                        value=DATA_COLS[0],
+                        options=[{"label": i, "value": i} for i in DATA_COLORS],
+                        value=DATA_COLORS[0],
                         clearable=False,
                     ),
                 ]

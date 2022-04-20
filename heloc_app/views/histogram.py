@@ -31,7 +31,7 @@ class Histogram(html.Div):
         )
 
     def update(self, selected_col1, selected_col2):
-        if not selected_col1:
+        if selected_col1:
             self.col1 = selected_col1
         if selected_col2:
             self.col2 = selected_col2

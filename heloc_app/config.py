@@ -10,3 +10,5 @@ GROUP_TYPES = ['Number of', 'Number of months', 'Percentage', 'Net Fraction']
 
 GRAPH_TYPES = ["Scatterplot Matrix", "Histogram", "Boxplot"]
 COL_GROUPS = ["Trade", "Inquiry", "Delinquency"]
+
+DATA_COLORS = ['RiskPerformance'] + DATA_COLS

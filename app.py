@@ -118,15 +118,15 @@ if __name__ == '__main__':
             Input("color-selector-data", "value"),
             Input("graph-type-2", "value"),
             Input("group-type-2", "value"),
-            Input("columns-3", "value"),
-            Input("columns-4", "value"),
+            Input("DATA_COLS-3", "value"),
+            Input("DATA_COLS-4", "value"),
         ])
     def update_data_plot(selected_color, graph, group, col_x, col_y):
         data_plot = graph_types.get(graph)
         cols = DATA_COLS
         show = {"display": "block"}
         hide = {"display": "none"}
-
+        
         if group == 'Number of':
             cols = [
                 "NumTrades60Ever/DerogPubRec",
