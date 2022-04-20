@@ -42,6 +42,7 @@ class Histogram(html.Div):
                                 hover_data=self.df.columns)
 
         self.fig.update_layout(
+            height = 800,
             yaxis_zeroline=False,
             xaxis_zeroline=False,
             dragmode='select'

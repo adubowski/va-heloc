@@ -30,6 +30,7 @@ class Boxplot(html.Div):
         self.fig = px.box(self.df[colss], color="RiskPerformance")
 
         self.fig.update_layout(
+            height= 800,
             yaxis_zeroline=False,
             xaxis_zeroline=False,
             dragmode='select'
