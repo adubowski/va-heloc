@@ -116,7 +116,11 @@ def feature_selection():
             html.Div([
                 'Feature Selection Menu',
             ]),
-            dcc.Checklist(id = "f-checklist", options = DATA_COLS, value = DATA_COLS),
+            dcc.Checklist(
+                id="f-checklist",
+                options=DATA_COLS,
+                value=DATA_COLS
+            ),
             html.Br(),
             html.Button('Close', id='modal-close-button', n_clicks=0)
         ],

@@ -7,7 +7,7 @@ from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.scatter_matrix import DataScatterMatrix
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, get_fitted_model, get_predictions, \
-    get_counterfactual_df, get_x_y, get_scatterplot_df
+    get_counterfactual_df, get_x_y, get_scatterplot_df, get_numerical_cols
 from dash import html, dash_table, dcc
 from dash.dependencies import Input, Output
 from heloc_app.config import DATA_COLS, SSC_COLS
@@ -22,8 +22,8 @@ if __name__ == '__main__':
     start = time.time()
     # Create data
     features = get_data()
-    X_test_transformed, X_test, y_test, X_train, y_train, numerical = \
-        get_x_y(features)
+    X_test_transformed, X_test, y_test, X_train, y_train = get_x_y(features)
+    numerical = get_numerical_cols(X_test)
     model = get_fitted_model(X_train, y_train)
     y_pred, y_pred_prob = get_predictions(model, X_test)
     scatterplot_X = get_scatterplot_df(X_test_transformed, X_test, y_test,
@@ -80,7 +80,6 @@ if __name__ == '__main__':
         ],
     )
 
-
     @app.callback(
         Output(plot1.html_id, "figure"),
         Output("color-type-1", "options"),
@@ -98,7 +97,7 @@ if __name__ == '__main__':
             if close == selected_features:
                 print("cols: " + str(cols))
                 # Get new train test split on selected cols
-                X_test_transformed, X_test, y_test, X_train, y_train, _ = \
+                X_test_transformed, X_test, y_test, X_train, y_train = \
                     get_x_y(features, cols)
                 # Retrain model on new data
                 model = get_fitted_model(X_train, y_train)
@@ -112,7 +111,6 @@ if __name__ == '__main__':
             # but creates no problem
 
             return plot1.update(sccolor, new_df), options
-
 
     @app.callback(
         Output(data_plot.html_id, "figure"),
@@ -168,7 +166,6 @@ if __name__ == '__main__':
         else:  # Boxplot
             return data_plot.update(cols), hide, hide, show
 
-
     @app.callback(
         Output(plot3.html_id, "figure"),
         [Input(plot1.html_id, "clickData")]
@@ -179,7 +176,6 @@ if __name__ == '__main__':
         if clicked is not None:
             return plot3.update(clicked['points'][0].get('customdata')[0])
         return plot3.update(X_test.index[0])
-
 
     @app.callback(
         Output("tbl", "data"),
@@ -207,7 +203,6 @@ if __name__ == '__main__':
         cols = [{"name": i, "id": i} for i in cf_df.columns]
         return data, cols
 
-
     @app.callback(
         Output("left-column", "children"), [
             Input("tabs", "value"),
@@ -221,7 +216,6 @@ if __name__ == '__main__':
                         feature_selection()]
         return children
 
-
     @app.callback(
         Output('modal', 'style'), [
             Input("features-button", "n_clicks"),
@@ -234,7 +228,6 @@ if __name__ == '__main__':
         else:
             print(values)
             return {"display": "none"}
-
 
     print("App startup time (s): ", time.time() - start)
     app.run_server(debug=False, dev_tools_ui=False)
