@@ -11,42 +11,6 @@ class Scatterplot(html.Div):
         self.df = input_df
         self.feature_x = feature_x
         self.feature_y = feature_y
-        self.fig = px.scatter(
-            self.df,
-            x=self.feature_x,
-            y=self.feature_y,
-            hover_data=self.df.columns,
-            custom_data=[self.df.index],
-            color=self.df.columns[0],
-            color_continuous_scale="redor"
-        )
-        # Estimate model's decision boundary using Voronoi tesselation
-        # Source: https://stackoverflow.com/a/61225622/9994398
-
-        # create meshgrid
-        res = 80
-        X2d_xmin = np.min(input_df[self.feature_x])
-        X2d_xmax = np.max(input_df[self.feature_x])
-        X2d_ymin = np.min(input_df[self.feature_y])
-        X2d_ymax = np.max(input_df[self.feature_y])
-        xx, yy = np.meshgrid(np.linspace(X2d_xmin, X2d_xmax, res),
-                             np.linspace(X2d_ymin, X2d_ymax, res))
-
-        X_embed = input_df[[self.feature_x, self.feature_y]]
-
-        # approximate Voronoi tesselation using KNN
-        background_model = KNeighborsClassifier(n_neighbors=25).fit(
-            X_embed,
-            input_df.y_pred
-        )
-        voronoiBackground = background_model.predict_proba(
-            np.c_[xx.ravel(), yy.ravel()]
-        )[:, 1]
-        voronoiBackground = voronoiBackground.reshape((res, res))
-        # plot
-        self.fig.add_trace(
-            go.Contour(z=voronoiBackground)
-        )
 
         # Equivalent to `html.Div([...])`
         super().__init__(
@@ -80,7 +44,6 @@ class Scatterplot(html.Div):
             color_continuous_scale=scplot_cmap
         )
 
-
         # Estimate model's decision boundary using Voronoi tesselation
         # Source: https://stackoverflow.com/a/61225622/9994398
 
@@ -96,7 +59,7 @@ class Scatterplot(html.Div):
         X_embed = input_df[[self.feature_x, self.feature_y]]
 
         # approximate Voronoi tesselation using KNN
-        background_model = KNeighborsClassifier(n_neighbors=25).fit(
+        background_model = KNeighborsClassifier(n_neighbors=10).fit(
             X_embed,
             input_df.y_pred
         )
@@ -110,14 +73,17 @@ class Scatterplot(html.Div):
                 x=np.linspace(X2d_xmin, X2d_xmax, res),
                 y=np.linspace(X2d_ymin, X2d_ymax, res),
                 z=voronoiBackground,
-                colorscale='RdYlGn'
+                colorscale='YlGn',
+                line_smoothing=0.75
             )
         )
 
         self.fig.update_layout(
             yaxis_zeroline=False,
             xaxis_zeroline=False,
-            dragmode='select'
+            dragmode='select',
+            height=650,
+            coloraxis_colorbar=dict(yanchor="top", y=1, x=0, ticks="outside")
         )
         self.fig.update_xaxes(visible=False, showticklabels=False)
         self.fig.update_yaxes(visible=False, showticklabels=False)

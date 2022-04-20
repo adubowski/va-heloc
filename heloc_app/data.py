@@ -197,7 +197,7 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
     cf_df = pd.DataFrame(
         [test_data, cfs_list],
         columns=d['feature_names'],
-        index=['Actual', 'Closest CounterFactual']
+        index=['Current', 'Desired']
     )
     if not include_all_cols:
         # Drop columns with the same values
@@ -205,5 +205,5 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
         cols_to_drop = unique_cols[unique_cols == 1].index
         cf_df = cf_df.drop(cols_to_drop, axis=1)
 
-    cf_df['Value'] = cf_df.index.tolist()
+    cf_df.insert(0, 'Value', cf_df.index.tolist())
     return cf_df

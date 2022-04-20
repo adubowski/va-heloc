@@ -26,17 +26,12 @@ class LimeBarchart(html.Div):
                         children="LIME Probability Explained"
                         ),
                 dcc.Graph(id=self.html_id),
-                html.H6(id="Counterfactuals",
-                        children="DiCE Counterfactual Explanations - What "
-                                 "change is needed to achieve the opposite "
-                                 "outcome?"
-                        ),
             ],
         )
 
     def update(self, point):
         if not point:
-            self.point = point
+            point = self.point
 
         explainer = LimeTabularExplainer(
             self.X_train.values,
@@ -57,6 +52,7 @@ class LimeBarchart(html.Div):
             "Probability attributed": prob_values,
             "Impact": impact
         }
+
         self.fig = px.bar(
             data_frame=pd.DataFrame(d),
             y="Explanation",
@@ -69,8 +65,6 @@ class LimeBarchart(html.Div):
             yaxis_zeroline=False,
             xaxis_zeroline=False,
             dragmode='select',
-            width=1500,
-            height=400,
             hovermode='closest',
         )
         self.fig.update_xaxes(fixedrange=True)

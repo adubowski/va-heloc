@@ -68,16 +68,24 @@ if __name__ == '__main__':
 
             # Right column
             html.Div(
-                dcc.Tabs(id='tabs', value='local_exp', children=[
-                    dcc.Tab(label='Local explanations', value='local_exp',
-                            children=[plot1, plot3, plot2]),
-                    dcc.Tab(label='Data', value='data', children=[data_plot]),
-                ]),
+                dcc.Tabs(
+                    id='tabs',
+                    value='local_exp',
+                    style={'height': '5vh'},
+                    children=[
+                        dcc.Tab(label='Local explanations',
+                                value='local_exp',
+                                children=[plot1, plot3, plot2]),
+                        dcc.Tab(label='Data',
+                                value='data',
+                                children=[data_plot]),
+                    ]),
                 id="right-column",
                 className="ten columns",
             ),
         ],
     )
+
 
     @app.callback(
         Output(plot1.html_id, "figure"),
@@ -101,6 +109,7 @@ if __name__ == '__main__':
             cols_dropdown = ['y_pred', 'y_pred_prob', 'y_test'] + cols
             options = [{"label": i, "value": i} for i in cols_dropdown]
             return plot1.update(scplt_color, new_df), options
+
 
     @app.callback(
         Output(data_plot.html_id, "figure"),
@@ -156,6 +165,7 @@ if __name__ == '__main__':
         else:  # Boxplot
             return data_plot.update(cols), hide, hide, show
 
+
     @app.callback(
         Output(plot3.html_id, "figure"),
         [Input(plot1.html_id, "clickData")]
@@ -164,6 +174,7 @@ if __name__ == '__main__':
         if clicked is not None:
             return plot3.update(clicked['points'][0].get('customdata')[0])
         return plot3.update(X_test.index[0])
+
 
     @app.callback(
         Output("tbl", "data"),
@@ -189,6 +200,7 @@ if __name__ == '__main__':
         cols = [{"name": i, "id": i} for i in cf_df.columns]
         return data, cols
 
+
     @app.callback(
         Output("left-column", "children"), [
             Input("tabs", "value"),
@@ -202,6 +214,7 @@ if __name__ == '__main__':
                         feature_selection()]
         return children
 
+
     @app.callback(
         Output('modal', 'style'), [
             Input("features-button", "n_clicks"),
@@ -213,6 +226,7 @@ if __name__ == '__main__':
             return {"display": "block"}
         else:
             return {"display": "none"}
+
 
     print("App startup time (s): ", time.time() - start)
     app.run_server(debug=False, dev_tools_ui=False)

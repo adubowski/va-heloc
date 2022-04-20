@@ -30,8 +30,10 @@ python -m app
 ```
 
 After the server has been started, one can access the app via web-browser at 
-[http://127.0.0.1:8050/](http://127.0.0.1:8050/)
+[http://127.0.0.1:8050/](http://127.0.0.1:8050/).
 
 ## Other
 Please note that the application has been developed as a research project 
 and is therefore not suitable for production deployment in the current state.
+Recommended viewing resolution is 1080p (Full HD) as we found it challenging 
+to set dynamic resolution in the plotly library.
