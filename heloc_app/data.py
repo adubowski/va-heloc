@@ -166,6 +166,13 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
     # DiCE counterfactual explanations
     df = X_train.copy()
     df['y'] = y_train.copy()
+
+    permitted_range_dict = {}
+    for col in numerical:
+        col_min = max(min(X_train[col]), 0)
+        col_max = max(X_train[col])
+        permitted_range_dict[col] = [col_min, col_max]
+
     data = Data(
         dataframe=df,
         continuous_features=numerical,
@@ -173,12 +180,17 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
     )
     m = Model(model=model, backend='sklearn')
     dice = Dice(data, m, method='random')
-    e = dice.generate_counterfactuals(X_test.loc[[point_index]], total_CFs=1,
-                                      desired_class="opposite")
+    e = dice.generate_counterfactuals(
+        X_test.loc[[point_index]],
+        total_CFs=1,
+        desired_class="opposite",
+        permitted_range=permitted_range_dict
+    )
 
     d = json.loads(e.to_json())
-    cfs_list = d['cfs_list'][0][0][:20]
-    test_data = d['test_data'][0][0][:20]  # TODO: Is it always 20?
+    n_x_cols = len(d['feature_names'])
+    cfs_list = d['cfs_list'][0][0][:n_x_cols]
+    test_data = d['test_data'][0][0][:n_x_cols]
     cf_df = pd.DataFrame(
         [test_data, cfs_list],
         columns=d['feature_names'],
