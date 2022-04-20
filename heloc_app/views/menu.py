@@ -13,7 +13,7 @@ def generate_description_card():
             html.Div(
                 id="intro",
                 children="Analyse local predictions of the model "
-                         "with the following DATA_COLS. "
+                         "with the following features. "
                          "Select a point and wait a couple of seconds "
                          "to see local and counterfactual explanations.",
             ),
@@ -28,7 +28,7 @@ def local_interactions():
     return html.Div(
         id="control-card",
         children=[
-            html.Label("Select DATA_COLS for coloring:"),
+            html.Label("Select features for coloring:"),
             dcc.Dropdown(
                 id="color-type-1",
                 options=[{"label": i, "value": i} for i in SSC_COLS],
@@ -59,7 +59,7 @@ def data_interactions():
                 id="div-color",
                 children=[
                     html.Br(),
-                    html.Label("Select DATA_COLS for coloring:"),
+                    html.Label("Select features for coloring:"),
                     dcc.Dropdown(
                         id="color-selector-data",
                         options=[{"label": i, "value": i} for i in DATA_COLS],
@@ -89,14 +89,14 @@ def data_interactions():
             html.Div(
                 id="div-hist",
                 children=[
-                    html.Label("Select DATA_COLS for x axis:"),
+                    html.Label("Select features for x axis:"),
                     dcc.Dropdown(
                         id="DATA_COLS-3",
                         options=[{"label": i, "value": i} for i in DATA_COLS],
                         value=DATA_COLS[0],
                         clearable=False,
                     ),
-                    html.Label("Select DATA_COLS for y axis:"),
+                    html.Label("Select features for y axis:"),
                     dcc.Dropdown(
                         id="DATA_COLS-4",
                         options=[{"label": i, "value": i} for i in DATA_COLS],

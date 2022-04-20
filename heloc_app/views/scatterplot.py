@@ -80,7 +80,6 @@ class Scatterplot(html.Div):
             color_continuous_scale=scplot_cmap
         )
 
-        self.fig.update_traces(mode='markers', marker_size=5)
 
         # Estimate model's decision boundary using Voronoi tesselation
         # Source: https://stackoverflow.com/a/61225622/9994398
@@ -105,9 +104,14 @@ class Scatterplot(html.Div):
             np.c_[xx.ravel(), yy.ravel()]
         )[:, 1]
         voronoiBackground = voronoiBackground.reshape((res, res))
-        # plot
+
         self.fig.add_trace(
-            go.Contour(z=voronoiBackground)
+            go.Contour(
+                x=np.linspace(X2d_xmin, X2d_xmax, res),
+                y=np.linspace(X2d_ymin, X2d_ymax, res),
+                z=voronoiBackground,
+                colorscale='RdYlGn'
+            )
         )
 
         self.fig.update_layout(
