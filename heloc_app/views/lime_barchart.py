@@ -67,7 +67,6 @@ class LimeBarchart(html.Div):
         self.fig.update_layout(
             yaxis_zeroline=False,
             xaxis_zeroline=False,
-            dragmode='select',
             hovermode='closest',
         )
         self.fig.update_xaxes(fixedrange=True)

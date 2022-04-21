@@ -150,8 +150,7 @@ def get_predictions(model, X_test) -> Tuple[list, list]:
 
 
 def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
-                          point_index, include_all_cols=False) -> \
-        pd.DataFrame:
+                          point_index, include_all_cols=False):
     """Provides a dataframe with DiCE counterfactual explanations for the given
     test point using provided classifier.
 
@@ -163,6 +162,8 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
     :param X_test: test dataset
     :param point_index: index of the point in the test dataset
     :param include_all_cols: flag whether to include all columns of the data
+    :param return_index: flag whether to return also the index of the
+    dataframe as separate column
     :return: Dataframe with Actual and Counterfactual values for the point.
     Unless include_all_cols is set to True, only changed columns are included.
     """
@@ -198,7 +199,7 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
     cf_df = pd.DataFrame(
         [test_data, cfs_list],
         columns=d['feature_names'],
-        index=['Current', 'Desired']
+        index=['Current', 'Alternative']
     )
     if not include_all_cols:
         # Drop columns with the same values
@@ -206,5 +207,6 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
         cols_to_drop = unique_cols[unique_cols == 1].index
         cf_df = cf_df.drop(cols_to_drop, axis=1)
 
-    cf_df.insert(0, 'Value', cf_df.index.tolist())
+    if return_index:
+        cf_df.insert(0, 'Value', cf_df.index.tolist())
     return cf_df

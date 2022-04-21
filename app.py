@@ -4,10 +4,11 @@ from heloc_app.views.menu import generate_description_card, \
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
 from heloc_app.views.lime_barchart import LimeBarchart
+from heloc_app.views.cf_barchart import CFBarchart
 from heloc_app.views.scatter_matrix import DataScatterMatrix
 from heloc_app.views.histogram import Histogram
-from heloc_app.data import get_data, get_fitted_model, get_counterfactual_df, \
-    get_x_y, get_scatterplot_df, get_numerical_cols
+from heloc_app.data import get_data, get_fitted_model, get_x_y, \
+    get_scatterplot_df, get_numerical_cols
 from dash import html, dash_table, dcc
 from dash.dependencies import Input, Output
 from heloc_app.config import DATA_COLS, SSC_COLS
@@ -33,6 +34,8 @@ if __name__ == '__main__':
                                    scatterplot_X),
         "LimeBarchart": LimeBarchart("LimeBarchart", X_test.index[0], X_train,
                                      X_test, model),
+        "CFBarchart": CFBarchart("CFBarchart", X_test.index[0], X_train,
+                                 y_train, X_test, model),
         # Data tab
         "Scatterplot Matrix": DataScatterMatrix("DataScatterMatrix", features,
                                                 model),
@@ -43,13 +46,7 @@ if __name__ == '__main__':
 
     # Initialization
     plot1 = graph_types.get("Scatterplot")
-    cf_df = get_counterfactual_df(X_train, y_train, model, numerical, X_test,
-                                  X_test.index[0])
-    plot2 = dash_table.DataTable(
-        data=cf_df.to_dict('records'),
-        columns=[{"name": i, "id": i} for i in cf_df.columns],
-        id='tbl'
-    )
+    plot2 = graph_types.get("CFBarchart")
     plot3 = graph_types.get("LimeBarchart")
     data_plot = graph_types.get("Scatterplot Matrix")
 
@@ -181,35 +178,44 @@ if __name__ == '__main__':
         Output(plot3.html_id, "figure"),
         [Input(plot1.html_id, "clickData")]
     )
-    def update_third(clicked):
+    def update_lime(clicked):
         if clicked is not None:
             return plot3.update(clicked['points'][0].get('customdata')[0])
         return plot3.update(X_test.index[0])
 
 
     @app.callback(
-        Output("tbl", "data"),
-        Output("tbl", "columns"), [
-            Input(plot1.html_id, "clickData"),
-        ]
+        Output(plot2.html_id, "figure"),
+        [Input(plot1.html_id, "clickData")]
     )
-    def update_table(clicked):
+    def update_cf(clicked):
         if clicked is not None:
-            cf_df = get_counterfactual_df(
-                X_train,
-                y_train,
-                model,
-                numerical,
-                X_test,
-                clicked['points'][0].get('customdata')[0]
-            )
-        else:  # added to get rid of errors
-            cf_df = get_counterfactual_df(X_train, y_train, model, numerical,
-                                          X_test,
-                                          X_test.index[0])
-        data = cf_df.to_dict('records')
-        cols = [{"name": i, "id": i} for i in cf_df.columns]
-        return data, cols
+            return plot2.update(clicked['points'][0].get('customdata')[0])
+        return plot2.update(X_test.index[0])
+
+    # @app.callback(
+    #     Output("tbl", "data"),
+    #     Output("tbl", "columns"), [
+    #         Input(plot1.html_id, "clickData"),
+    #     ]
+    # )
+    # def update_table(clicked):
+    #     if clicked is not None:
+    #         cf_df = get_counterfactual_df(
+    #             X_train,
+    #             y_train,
+    #             model,
+    #             numerical,
+    #             X_test,
+    #             clicked['points'][0].get('customdata')[0]
+    #         )
+    #     else:  # added to get rid of errors
+    #         cf_df = get_counterfactual_df(X_train, y_train, model, numerical,
+    #                                       X_test,
+    #                                       X_test.index[0])
+    #     data = cf_df.to_dict('records')
+    #     cols = [{"name": i, "id": i} for i in cf_df.columns]
+    #     return data, cols
 
 
     @app.callback(
