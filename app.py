@@ -75,7 +75,19 @@ if __name__ == '__main__':
                     children=[
                         dcc.Tab(label='Local explanations',
                                 value='local_exp',
-                                children=[plot1, plot3, plot2]),
+                                children=[
+                                    plot1,
+                                    html.Div(
+                                        id='lime',
+                                        className="seven columns",
+                                        children=[plot3]
+                                    ),
+                                    html.Div(
+                                        id='cf',
+                                        className="five columns",
+                                        children=[plot2]
+                                    )]
+                                ),
                         dcc.Tab(label='Data',
                                 value='data',
                                 children=[data_plot]),

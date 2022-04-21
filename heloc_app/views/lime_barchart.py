@@ -25,7 +25,8 @@ class LimeBarchart(html.Div):
             className="graph_card",
             children=[
                 html.H6(id=self.title_id,
-                        children="LIME Probability Explained"
+                        children="LIME Probability Explained (Can take a "
+                                 "couple of seconds to calculate...)"
                         ),
                 dcc.Graph(id=self.html_id),
             ],

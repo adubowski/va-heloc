@@ -7,7 +7,7 @@ body {
 }
 
 #left-column {
-    padding: 6px 0.8rem;
+    padding: 2px 0.6rem;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -15,7 +15,7 @@ body {
 
 #right-column {
     background-color: #f4f4f4;
-    padding: 0 1rem;
+    padding: 0 0.2rem;
     min-height: 100vh;
 }
 
@@ -36,9 +36,9 @@ h5 {
 .graph_card {
     background-color: white;
     border-radius: 0.675rem;
-    padding: 1rem;
-    margin: auto;
-    margin-top: 20px;
+    padding: 0.6rem;
+    margin: 0.6rem;
+    margin-top: 10px;
 }
 
 .graph_card h6 {
@@ -59,8 +59,8 @@ h5 {
 }
 
 .modal-content {
-    margin: 40px;
+    margin: 10px;
     height: 600px;
-    padding: 40px;
+    padding: 10px;
     background-color: #c58797;
 }
