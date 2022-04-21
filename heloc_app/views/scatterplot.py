@@ -31,7 +31,7 @@ class Scatterplot(html.Div):
 
         scplot_cmap = \
             'RdYlGn' if scplt_color in ('y_pred_prob', 'y_pred', 'y_test') \
-            else 'Set 1' if scplt_color in categorical \
+            else px.colors.qualitative.G10 if scplt_color in categorical \
             else 'Oranges'
 
         self.fig = px.scatter(
@@ -41,7 +41,8 @@ class Scatterplot(html.Div):
             hover_data=input_df.columns,
             custom_data=[input_df.index],
             color=scplt_color,
-            color_continuous_scale=scplot_cmap
+            color_continuous_scale=scplot_cmap,
+            color_discrete_sequence=px.colors.qualitative.G10
         )
 
         # Estimate model's decision boundary using Voronoi tesselation

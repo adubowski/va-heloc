@@ -103,7 +103,11 @@ def get_fitted_model(X_train, y_train) -> RandomForestClassifier:
     :param y_train: labels for the training dataset
     :return: Fitted Random Forest classifier model
     """
-    model = RandomForestClassifier(n_estimators=200, n_jobs=-1)
+    model = RandomForestClassifier(
+        n_estimators=200,
+        n_jobs=-1,
+        max_features='sqrt'
+    )
     model.fit(X_train, y_train)
     return model
 
@@ -150,7 +154,8 @@ def get_predictions(model, X_test) -> Tuple[list, list]:
 
 
 def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
-                          point_index, include_all_cols=False):
+                          point_index, include_all_cols=False,
+                          return_index=True):
     """Provides a dataframe with DiCE counterfactual explanations for the given
     test point using provided classifier.
 

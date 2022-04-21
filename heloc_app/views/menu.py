@@ -1,5 +1,6 @@
 from dash import dcc, html
-from ..config import GRAPH_TYPES, DATA_COLS, SSC_COLS, GROUP_TYPES, DATA_COLORS
+from ..config import DATA_GRAPH_TYPES, DATA_COLS, SSC_COLS, DATA_GROUP_TYPES, \
+    DATA_COLORS, GLOBAL_PLOT_TYPES
 
 
 def generate_description_card():
@@ -12,10 +13,13 @@ def generate_description_card():
             html.H5("HELOC Group 22"),
             html.Div(
                 id="intro",
-                children="Analyse local predictions of the model "
-                         "with the following features. "
-                         "Select a point and wait a couple of seconds "
-                         "to see local and counterfactual explanations.",
+                children="Analyse local and global predictions of the model. "
+                         "In the Local Explanations tab you can select a "
+                         "point and (after a couple of seconds) you will "
+                         "see local and counterfactual explanations. In the "
+                         "data tab you can investigate the correlations in "
+                         "the dataset while in the global tab you will see "
+                         "main contributors to the model predictions.",
             ),
         ],
     )
@@ -41,6 +45,26 @@ def local_interactions():
     )
 
 
+def global_interactions():
+    """
+    :return: A Div containing controls for graphs.
+    """
+    return html.Div(
+        id="control-card",
+        children=[
+            html.Label("Select plot:"),
+            dcc.Dropdown(
+                id="color-type-1",
+                options=[{"label": i, "value": i} for i in GLOBAL_PLOT_TYPES],
+                value=GLOBAL_PLOT_TYPES[0],
+                clearable=False,
+            ),
+            html.Br(),
+            html.Button('Select Features', id='features-button', n_clicks=0),
+        ], style={"textAlign": "float-left"}
+    )
+
+
 def data_interactions():
     """
     :return: A Div containing controls for graphs.
@@ -51,8 +75,8 @@ def data_interactions():
             html.Label("Select plot type:"),
             dcc.Dropdown(
                 id="graph-type-2",
-                options=[{"label": i, "value": i} for i in GRAPH_TYPES],
-                value=GRAPH_TYPES[0],
+                options=[{"label": i, "value": i} for i in DATA_GRAPH_TYPES],
+                value=DATA_GRAPH_TYPES[0],
                 clearable=False,
             ),
             html.Div(
@@ -78,8 +102,8 @@ def data_interactions():
                         options=[{
                             "label": i,
                             "value": i
-                        } for i in GROUP_TYPES],
-                        value=GROUP_TYPES[0],
+                        } for i in DATA_GROUP_TYPES],
+                        value=DATA_GROUP_TYPES[0],
                         clearable=False,
                     ),
                 ]

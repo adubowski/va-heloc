@@ -46,7 +46,8 @@ class CFBarchart(html.Div):
             self.model,
             get_numerical_cols(self.X_test),
             self.X_test,
-            point
+            point,
+            return_index=False
         )
         scenarios = []
         cols = []

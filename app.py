@@ -1,15 +1,17 @@
 from heloc_app.main import app
 from heloc_app.views.menu import generate_description_card, \
-    local_interactions, data_interactions, feature_selection
+    local_interactions, data_interactions, feature_selection, \
+    global_interactions
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
+from heloc_app.views.permutation_boxplot import PermutationBoxplot
 from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.cf_barchart import CFBarchart
 from heloc_app.views.scatter_matrix import DataScatterMatrix
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, get_fitted_model, get_x_y, \
     get_scatterplot_df, get_numerical_cols
-from dash import html, dash_table, dcc
+from dash import html, dcc
 from dash.dependencies import Input, Output
 from heloc_app.config import DATA_COLS, SSC_COLS
 # ignore known warnings
@@ -24,11 +26,16 @@ if __name__ == '__main__':
     # Create data
     features = get_data()
     X_transformed, X_test, y_test, X_train, y_train = get_x_y(features)
+    sample = 100
+    X_global_test, y_global_test = X_test[:sample], y_test[:sample]
+    columns = list(X_global_test.columns)
     numerical = get_numerical_cols(X_test)
     model = get_fitted_model(X_train, y_train)
-    scatterplot_X = get_scatterplot_df(X_transformed, X_test, y_test,
-                                       model)
+    scatterplot_X = get_scatterplot_df(X_transformed, X_test, y_test, model)
     graph_types = {
+        # Global Explanations tab
+        "GlobalBoxplot": PermutationBoxplot("GlobalBoxplot", features),
+        # "SHAP Summary Plot":
         # Local Explanations tab
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2",
                                    scatterplot_X),
@@ -45,10 +52,11 @@ if __name__ == '__main__':
     }
 
     # Initialization
-    plot1 = graph_types.get("Scatterplot")
-    plot2 = graph_types.get("CFBarchart")
-    plot3 = graph_types.get("LimeBarchart")
+    scatterplot = graph_types.get("Scatterplot")
+    cf_barchart = graph_types.get("CFBarchart")
+    lime_barchart = graph_types.get("LimeBarchart")
     data_plot = graph_types.get("Scatterplot Matrix")
+    global_boxplot = graph_types.get("GlobalBoxplot")
 
     app.layout = html.Div(
         id="app-container",
@@ -70,19 +78,23 @@ if __name__ == '__main__':
                     value='local_exp',
                     style={'height': '5vh'},
                     children=[
+                        dcc.Tab(label='Global explanations',
+                                value='global_exp',
+                                children=[global_boxplot]
+                                ),
                         dcc.Tab(label='Local explanations',
                                 value='local_exp',
                                 children=[
-                                    plot1,
+                                    scatterplot,
                                     html.Div(
                                         id='lime',
                                         className="seven columns",
-                                        children=[plot3]
+                                        children=[lime_barchart]
                                     ),
                                     html.Div(
                                         id='cf',
                                         className="five columns",
-                                        children=[plot2]
+                                        children=[cf_barchart]
                                     )]
                                 ),
                         dcc.Tab(label='Data',
@@ -96,7 +108,7 @@ if __name__ == '__main__':
     )
 
     @app.callback(
-        Output(plot1.html_id, "figure"),
+        Output(scatterplot.html_id, "figure"),
         Output("color-type-1", "options"),
         [
             Input("color-type-1", "value"),
@@ -107,7 +119,7 @@ if __name__ == '__main__':
     def update_first(scplt_color, close, selected_features, cols):
         if close == 0:
             options = [{"label": i, "value": i} for i in SSC_COLS]
-            return plot1.update(scplt_color, scatterplot_X), options
+            return scatterplot.update(scplt_color, scatterplot_X), options
         elif close == selected_features:
             # Get new train test split on selected cols
             X_trans, X_test, y_test, X_train, y_train = get_x_y(features, cols)
@@ -116,7 +128,17 @@ if __name__ == '__main__':
             new_df = get_scatterplot_df(X_trans, X_test, y_test, model)
             cols_dropdown = ['y_pred', 'y_pred_prob', 'y_test'] + cols
             options = [{"label": i, "value": i} for i in cols_dropdown]
-            return plot1.update(scplt_color, new_df), options
+            return scatterplot.update(scplt_color, new_df), options
+
+
+    @app.callback(
+        Output(global_boxplot.html_id, "figure"),
+        [
+            Input("color-selector-data", "value"),
+        ]
+    )
+    def update_global_boxplot(dummy):
+        return global_boxplot.update(model, X_global_test, y_global_test)
 
 
     @app.callback(
@@ -175,47 +197,23 @@ if __name__ == '__main__':
 
 
     @app.callback(
-        Output(plot3.html_id, "figure"),
-        [Input(plot1.html_id, "clickData")]
+        Output(lime_barchart.html_id, "figure"),
+        [Input(scatterplot.html_id, "clickData")]
     )
     def update_lime(clicked):
         if clicked is not None:
-            return plot3.update(clicked['points'][0].get('customdata')[0])
-        return plot3.update(X_test.index[0])
+            return lime_barchart.update(clicked['points'][0].get('customdata')[0])
+        return lime_barchart.update(X_test.index[0])
 
 
     @app.callback(
-        Output(plot2.html_id, "figure"),
-        [Input(plot1.html_id, "clickData")]
+        Output(cf_barchart.html_id, "figure"),
+        [Input(scatterplot.html_id, "clickData")]
     )
     def update_cf(clicked):
         if clicked is not None:
-            return plot2.update(clicked['points'][0].get('customdata')[0])
-        return plot2.update(X_test.index[0])
-
-    # @app.callback(
-    #     Output("tbl", "data"),
-    #     Output("tbl", "columns"), [
-    #         Input(plot1.html_id, "clickData"),
-    #     ]
-    # )
-    # def update_table(clicked):
-    #     if clicked is not None:
-    #         cf_df = get_counterfactual_df(
-    #             X_train,
-    #             y_train,
-    #             model,
-    #             numerical,
-    #             X_test,
-    #             clicked['points'][0].get('customdata')[0]
-    #         )
-    #     else:  # added to get rid of errors
-    #         cf_df = get_counterfactual_df(X_train, y_train, model, numerical,
-    #                                       X_test,
-    #                                       X_test.index[0])
-    #     data = cf_df.to_dict('records')
-    #     cols = [{"name": i, "id": i} for i in cf_df.columns]
-    #     return data, cols
+            return cf_barchart.update(clicked['points'][0].get('customdata')[0])
+        return cf_barchart.update(X_test.index[0])
 
 
     @app.callback(
@@ -226,9 +224,12 @@ if __name__ == '__main__':
     def update_interactions(tab):
         if tab == 'data':
             children = [generate_description_card(), data_interactions()]
-        else:
+        elif tab == 'local_exp':
             children = [generate_description_card(), local_interactions(),
                         feature_selection()]
+        else:
+            children = [generate_description_card(),
+                        global_interactions(), feature_selection()]
         return children
 
 
