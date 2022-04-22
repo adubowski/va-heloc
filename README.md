@@ -5,7 +5,25 @@ predictions of the HELOC prediction model. The app is built with a Dash
 template provided in the Visualization (JBI100) course and a number of 
 freely available Python libraries, specified in requirements.txt file.
 
-[comment]: <> (TODO: Add abstract summary)
+Abstract of the problem statement and suggest work:
+The complex and "black box" nature of the machine learning methods hinders 
+the connection between the human touch (providing domain expertise)
+and the efficiency of the automated decision making methods. 
+The challenge that was tackled is about understanding 
+and explaining the gap between the machine learning models 
+and the ability to understand these models to address the outcome of 
+the Home Equity Line of Credit (HELOC) applications. 
+In order to introduce explainability to this problem, 
+HELOC Model Explainer Group 22 was developed. 
+Visual analytics techniques were used to develop this solution
+in order to provide understanding, diagnosing and refining to the model. 
+The motivation is to enable the users to understand the model 
+and thus provide reasoning and gather insights of the decisions made by the model. 
+As the insurance and finance sector have high-risk, 
+the decisions need to reasoned very well. 
+As a result, the solution was able to address the user tasks which were to provide explanations 
+(local and global) of the prediction result by also introducing interactivity for the user, 
+provide the importance of each attribute and provide an explanation of the dataset.
 
 ## Prerequisites
 In order to successfully run the application, a number of Python libraries 
