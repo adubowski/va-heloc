@@ -19,7 +19,10 @@ def generate_description_card():
                          "see local and counterfactual explanations. In the "
                          "data tab you can investigate the correlations in "
                          "the dataset while in the global tab you will see "
-                         "main contributors to the model predictions.",
+                         "different plots showing main contributors to the "
+                         "model predictions. Note that due to computation "
+                         "constraints, only a sample of test data is used for "
+                         "model explanation plots.",
             ),
         ],
     )
@@ -54,13 +57,12 @@ def global_interactions():
         children=[
             html.Label("Select plot:"),
             dcc.Dropdown(
-                id="color-type-1",
+                id="global-plot-selector",
                 options=[{"label": i, "value": i} for i in GLOBAL_PLOT_TYPES],
                 value=GLOBAL_PLOT_TYPES[0],
                 clearable=False,
             ),
             html.Br(),
-            html.Button('Select Features', id='features-button', n_clicks=0),
         ], style={"textAlign": "float-left"}
     )
 

@@ -1,8 +1,13 @@
+import base64
+from dash import html, dcc
+import io
 import json
 from typing import Tuple, List
 
 import pandas as pd
+import shap
 from dice_ml import Model, Dice, Data
+from matplotlib import pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.manifold import TSNE
 from sklearn.model_selection import train_test_split
@@ -48,7 +53,8 @@ def get_x_y(features: pd.DataFrame, subset: List[str] = None) \
     categorical = []
     X = features[features.columns[1:]]
     y = features["RiskPerformance"]
-
+    # Sample half the data to make app smoother
+    X, _, y, _ = train_test_split(X, y, stratify=y, train_size=0.5)
     if subset and len(subset) > 0:
         X = X[subset]
 
@@ -77,12 +83,13 @@ def get_x_y(features: pd.DataFrame, subset: List[str] = None) \
         transformer.fit_transform(X),
         columns=list(numerical) + list(categorical)
     )
+
     X_train, X_test, y_train, y_test = train_test_split(X, y_code,
                                                         stratify=y_code,
-                                                        train_size=0.9,
+                                                        train_size=0.8,
                                                         random_state=0)
     _, X_test_transformed, _, _ = train_test_split(
-        X_transform, y_code, stratify=y_code, train_size=0.9, random_state=0)
+        X_transform, y_code, stratify=y_code, train_size=0.8, random_state=0)
 
     return X_test_transformed, X_test, y_test, X_train, y_train
 
@@ -215,3 +222,33 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
     if return_index:
         cf_df.insert(0, 'Value', cf_df.index.tolist())
     return cf_df
+
+
+def get_shap_plot(model, X_test, plot_type='bar'):
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_test)[1]
+    if plot_type == 'bar':
+        shap.summary_plot(
+            shap_values,
+            X_test,
+            show=False,
+            plot_type='bar'
+        )
+    elif plot_type == 'summary':
+        shap.summary_plot(
+            shap_values,
+            X_test,
+            show=False
+        )
+    elif plot_type == 'decision':
+        shap.decision_plot(
+            explainer.expected_value[0],
+            shap_values,
+            X_test.iloc,
+            show=False
+        )
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png", dpi=100, bbox_inches='tight')
+    encoded = base64.b64encode(buf.getvalue()).decode('utf-8')
+    plt.close()
+    return html.Img(src=f"data:image/png;base64, {encoded}")

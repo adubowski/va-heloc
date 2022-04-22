@@ -10,7 +10,7 @@ from heloc_app.views.cf_barchart import CFBarchart
 from heloc_app.views.scatter_matrix import DataScatterMatrix
 from heloc_app.views.histogram import Histogram
 from heloc_app.data import get_data, get_fitted_model, get_x_y, \
-    get_scatterplot_df, get_numerical_cols
+    get_scatterplot_df, get_numerical_cols, get_shap_plot
 from dash import html, dcc
 from dash.dependencies import Input, Output
 from heloc_app.config import DATA_COLS, SSC_COLS
@@ -24,9 +24,9 @@ simplefilter(action='ignore', category=UserWarning)
 if __name__ == '__main__':
     start = time.time()
     # Create data
-    features = get_data()
-    X_transformed, X_test, y_test, X_train, y_train = get_x_y(features)
-    sample = 100
+    origin = get_data()
+    X_transformed, X_test, y_test, X_train, y_train = get_x_y(origin)
+    sample = 250
     X_global_test, y_global_test = X_test[:sample], y_test[:sample]
     columns = list(X_global_test.columns)
     numerical = get_numerical_cols(X_test)
@@ -34,8 +34,8 @@ if __name__ == '__main__':
     scatterplot_X = get_scatterplot_df(X_transformed, X_test, y_test, model)
     graph_types = {
         # Global Explanations tab
-        "GlobalBoxplot": PermutationBoxplot("GlobalBoxplot", features),
-        # "SHAP Summary Plot":
+        "Permutation Importances":
+            PermutationBoxplot("Permutation Importances", origin),
         # Local Explanations tab
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2",
                                    scatterplot_X),
@@ -44,11 +44,10 @@ if __name__ == '__main__':
         "CFBarchart": CFBarchart("CFBarchart", X_test.index[0], X_train,
                                  y_train, X_test, model),
         # Data tab
-        "Scatterplot Matrix": DataScatterMatrix("DataScatterMatrix", features,
+        "Scatterplot Matrix": DataScatterMatrix("DataScatterMatrix", origin,
                                                 model),
-        "Boxplot": Boxplot("Boxplot", features),
-        "Histogram": Histogram("Histogram", DATA_COLS[0], DATA_COLS[1],
-                               features),
+        "Boxplot": Boxplot("Boxplot", origin),
+        "Histogram": Histogram("Histogram", DATA_COLS[0], DATA_COLS[1], origin),
     }
 
     # Initialization
@@ -56,8 +55,8 @@ if __name__ == '__main__':
     cf_barchart = graph_types.get("CFBarchart")
     lime_barchart = graph_types.get("LimeBarchart")
     data_plot = graph_types.get("Scatterplot Matrix")
-    global_boxplot = graph_types.get("GlobalBoxplot")
-
+    global_boxplot = graph_types.get("Permutation Importances")
+    # shap_summary_plot = graph_types.get("SHAP Summary Plot")
     app.layout = html.Div(
         id="app-container",
         children=[
@@ -78,10 +77,12 @@ if __name__ == '__main__':
                     value='local_exp',
                     style={'height': '5vh'},
                     children=[
-                        dcc.Tab(label='Global explanations',
-                                value='global_exp',
-                                children=[global_boxplot]
-                                ),
+                        dcc.Tab(
+                            id='global_plots',
+                            label='Global explanations',
+                            value='global_exp',
+                            children=[get_shap_plot(model, X_global_test)]
+                        ),
                         dcc.Tab(label='Local explanations',
                                 value='local_exp',
                                 children=[
@@ -107,6 +108,7 @@ if __name__ == '__main__':
         ],
     )
 
+
     @app.callback(
         Output(scatterplot.html_id, "figure"),
         Output("color-type-1", "options"),
@@ -122,23 +124,13 @@ if __name__ == '__main__':
             return scatterplot.update(scplt_color, scatterplot_X), options
         elif close == selected_features:
             # Get new train test split on selected cols
-            X_trans, X_test, y_test, X_train, y_train = get_x_y(features, cols)
+            X_trans, X_test, y_test, X_train, y_train = get_x_y(origin, cols)
             # Retrain model on new data
             model = get_fitted_model(X_train, y_train)
             new_df = get_scatterplot_df(X_trans, X_test, y_test, model)
             cols_dropdown = ['y_pred', 'y_pred_prob', 'y_test'] + cols
             options = [{"label": i, "value": i} for i in cols_dropdown]
             return scatterplot.update(scplt_color, new_df), options
-
-
-    @app.callback(
-        Output(global_boxplot.html_id, "figure"),
-        [
-            Input("color-selector-data", "value"),
-        ]
-    )
-    def update_global_boxplot(dummy):
-        return global_boxplot.update(model, X_global_test, y_global_test)
 
 
     @app.callback(
@@ -157,7 +149,7 @@ if __name__ == '__main__':
         cols = DATA_COLS
         show = {"display": "block"}
         hide = {"display": "none"}
-        
+
         if group == 'Number of':
             cols = [
                 "NumTrades60Ever/DerogPubRec",
@@ -202,7 +194,8 @@ if __name__ == '__main__':
     )
     def update_lime(clicked):
         if clicked is not None:
-            return lime_barchart.update(clicked['points'][0].get('customdata')[0])
+            return lime_barchart.update(
+                clicked['points'][0].get('customdata')[0])
         return lime_barchart.update(X_test.index[0])
 
 
@@ -229,7 +222,29 @@ if __name__ == '__main__':
                         feature_selection()]
         else:
             children = [generate_description_card(),
-                        global_interactions(), feature_selection()]
+                        global_interactions(),
+                        feature_selection()
+                        ]
+        return children
+
+
+    @app.callback(
+        Output("global_plots", "children"), [
+            Input("global-plot-selector", "value"),
+        ]
+    )
+    def update_global_plot(plot_selected):
+        if plot_selected == 'SHAP Bar Plot':
+            children = [get_shap_plot(model, X_global_test)]
+        elif plot_selected == 'SHAP Decision Plot':
+            children = [get_shap_plot(model, X_global_test,
+                                      plot_type='decision')]
+        elif plot_selected == 'SHAP Summary Plot':
+            children = [get_shap_plot(model, X_global_test,
+                                      plot_type='summary')]
+        else:
+            children = [global_boxplot.update(model, X_global_test,
+                                              y_global_test)]
         return children
 
 

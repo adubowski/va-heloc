@@ -22,13 +22,15 @@ class PermutationBoxplot(html.Div):
             className="graph_card",
             children=[
                 html.H6(id=self.title_id,
-                        children="Permutation Importances (might take a while)"
+                        children="Permutation Importances"
                         ),
                 dcc.Graph(id=self.html_id),
             ],
         )
 
     def update(self, model, X_global_test, y_global_test):
+        X_global_test = X_global_test[:min(len(X_global_test), 50)]
+        y_global_test = y_global_test[:min(len(y_global_test), 50)]
         perm_importance = permutation_importance(
             model, X_global_test, y_global_test, n_repeats=7, random_state=0
         )  # Takes a long time
