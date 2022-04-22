@@ -6,10 +6,12 @@ from lime.lime_tabular import LimeTabularExplainer
 
 class LimeBarchart(html.Div):
     def __init__(self, name, point, X_train, X_test, model):
-        """
+        """Barchart presenting LIME values for a local explanation
        :param name: name of the plot
        :param point: ID of the point for which to calculate lime explanations
-       :param df: dataframe
+       :param X_train: train dataset used in the model
+       :param X_test: test dataset used in the model
+       :param model: fitted classifier model
        """
         self.html_id = name.lower().replace(" ", "-")
         self.name = name
@@ -26,15 +28,12 @@ class LimeBarchart(html.Div):
                         children="LIME Probability Explained"
                         ),
                 dcc.Graph(id=self.html_id),
-                html.H6(id="Counterfactuals",
-                        children="Counterfactual Explanations - What change is needed to achieve the opposite outcome?"
-                        ),
             ],
         )
 
     def update(self, point):
-        if point != None:
-            self.point = point
+        if not point:
+            point = self.point
 
         explainer = LimeTabularExplainer(
             self.X_train.values,
@@ -42,17 +41,20 @@ class LimeBarchart(html.Div):
             feature_names=self.X_train.columns,
             verbose=True
         )
-        exp = explainer.explain_instance(self.X_test.loc[point], self.model.predict_proba)
+        exp = explainer.explain_instance(self.X_test.loc[point],
+                                         self.model.predict_proba)
 
         explanations = [e[0] for e in exp.as_list()]
         prob_values = [e[1] for e in exp.as_list()]
-        impact = ['positive' if e[1] > 0 else 'negative' for e in exp.as_list()]
+        impact = ['Higher RiskPerformance' if e[1] > 0
+                  else 'Lower RiskPerformance' for e in exp.as_list()]
 
         d = {
             "Explanation": explanations,
             "Probability attributed": prob_values,
             "Impact": impact
         }
+
         self.fig = px.bar(
             data_frame=pd.DataFrame(d),
             y="Explanation",
@@ -64,15 +66,15 @@ class LimeBarchart(html.Div):
         self.fig.update_layout(
             yaxis_zeroline=False,
             xaxis_zeroline=False,
-            dragmode='select'
+            hovermode='closest',
         )
         self.fig.update_xaxes(fixedrange=True)
         self.fig.update_yaxes(fixedrange=True)
 
         # update titles
         self.fig.update_layout(
-            xaxis_title="Explanation",
-            yaxis_title="Probability attributed",
+            xaxis_title="Probability attributed",
+            yaxis_title="Explanation",
         )
 
         return self.fig

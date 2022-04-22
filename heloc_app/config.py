@@ -1,14 +1,20 @@
-# Here you can add any global configuations
-from heloc_app.data import get_data
-import pandas as pd
+from .data import get_data
 
-features = pd.read_csv('heloc_model/heloc_dataset_v1.csv')
-to_remove = ['NumTotalTrades', 'NumTrades90Ever/DerogPubRec', 'NumInqLast6Mexcl7days']
-features = features.drop(to_remove, axis=1)
+features = get_data()
+DATA_COLS = features[features.columns[1:]].columns.tolist()
+Y_COLS = ["y_pred", "y_pred_prob", "y_test"]
 
-graph_type = ["Histogram","Boxplot"]
-columns = features[features.columns[1:]].columns.tolist()
-color_type = ["y_test", "y_predict"]
-col_group = ["Trade", "Inquiry", "Delinquency"]
+GLOBAL_PLOT_TYPES = [
+    "SHAP Bar Plot",
+    "SHAP Summary Plot",
+    "SHAP Decision Plot"
+]
+# Scatterplot columns
+SSC_COLS = Y_COLS + DATA_COLS
+DATA_GROUP_TYPES = ['Units', 'Months', 'Percentage',
+                    'Net Fraction']
 
-colorssc = color_type + columns
+DATA_GRAPH_TYPES = ["Scatterplot Matrix", "Histogram", "Boxplot"]
+COL_GROUPS = ["Trade", "Inquiry", "Delinquency"]
+
+DATA_COLORS = ['RiskPerformance'] + DATA_COLS

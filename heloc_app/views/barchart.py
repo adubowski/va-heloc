@@ -1,23 +1,20 @@
 from dash import dcc, html
-import plotly.graph_objects as go
 import plotly.express as px
+
 
 class Barchart(html.Div):
     def __init__(self, name, col1, col2, df):
         """
        :param name: name of the plot
-       :param feature_x: x attribute
-       :param feature_y: y attribute
        :param df: dataframe
        """
         self.html_id = name.lower().replace(" ", "-")
         self.df = df
-        self.col2 = col1
+        self.col1 = col1
         self.col2 = col2
         self.name = name
+        self.fig = px.bar(self.df, x=self.col1, y=self.col2)
         self.title_id = self.html_id + "-t"
-        #self.tool_id = self.html_id + "-br"
-        #self.def_id = self.html_id + "-def"
 
         # Equivalent to `html.Div([...])`
         super().__init__(
@@ -32,15 +29,17 @@ class Barchart(html.Div):
         )
 
     def update(self, selected_col1, selected_col2):
-        if selected_col1 != None:
+        if selected_col1:
             self.col1 = selected_col1
-        if selected_col2 != None:
+        if selected_col2:
             self.col2 = selected_col2
-        
-        x_values = self.df[self.col1]
-        y_values = self.df[self.col2]
 
-        self.fig = px.bar(self.df, x=self.col1, y=self.col2, color="RiskPerformance")
+        self.fig = px.bar(
+            self.df,
+            x=self.col1,
+            y=self.col2,
+            color="RiskPerformance"
+        )
 
         self.fig.update_layout(
             yaxis_zeroline=False,
