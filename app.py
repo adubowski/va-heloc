@@ -1,10 +1,10 @@
+import shap
 from heloc_app.main import app
 from heloc_app.views.menu import generate_description_card, \
     local_interactions, data_interactions, feature_selection, \
     global_interactions
 from heloc_app.views.scatterplot import Scatterplot
 from heloc_app.views.boxplot import Boxplot
-from heloc_app.views.permutation_boxplot import PermutationBoxplot
 from heloc_app.views.lime_barchart import LimeBarchart
 from heloc_app.views.cf_barchart import CFBarchart
 from heloc_app.views.scatter_matrix import DataScatterMatrix
@@ -26,16 +26,15 @@ if __name__ == '__main__':
     # Create data
     origin = get_data()
     X_transformed, X_test, y_test, X_train, y_train = get_x_y(origin)
-    sample = 250
+    sample = 100
     X_global_test, y_global_test = X_test[:sample], y_test[:sample]
     columns = list(X_global_test.columns)
     numerical = get_numerical_cols(X_test)
     model = get_fitted_model(X_train, y_train)
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_global_test)[1]
     scatterplot_X = get_scatterplot_df(X_transformed, X_test, y_test, model)
     graph_types = {
-        # Global Explanations tab
-        "Permutation Importances":
-            PermutationBoxplot("Permutation Importances", origin),
         # Local Explanations tab
         "Scatterplot": Scatterplot("Scatterplot", "Embedding 1", "Embedding 2",
                                    scatterplot_X),
@@ -55,8 +54,7 @@ if __name__ == '__main__':
     cf_barchart = graph_types.get("CFBarchart")
     lime_barchart = graph_types.get("LimeBarchart")
     data_plot = graph_types.get("Scatterplot Matrix")
-    global_boxplot = graph_types.get("Permutation Importances")
-    # shap_summary_plot = graph_types.get("SHAP Summary Plot")
+    # global_boxplot = graph_types.get("Permutation Importances")
     app.layout = html.Div(
         id="app-container",
         children=[
@@ -74,14 +72,15 @@ if __name__ == '__main__':
             html.Div(
                 dcc.Tabs(
                     id='tabs',
-                    value='local_exp',
+                    value='global_exp',
                     style={'height': '5vh'},
                     children=[
                         dcc.Tab(
                             id='global_plots',
                             label='Global explanations',
                             value='global_exp',
-                            children=[get_shap_plot(model, X_global_test)]
+                            children=[get_shap_plot(explainer, shap_values,
+                                      X_global_test)],
                         ),
                         dcc.Tab(label='Local explanations',
                                 value='local_exp',
@@ -150,7 +149,7 @@ if __name__ == '__main__':
         show = {"display": "block"}
         hide = {"display": "none"}
 
-        if group == 'Number of':
+        if group == 'Units':
             cols = [
                 "NumTrades60Ever/DerogPubRec",
                 "NumTradesOpeninLast12M",
@@ -160,7 +159,7 @@ if __name__ == '__main__':
                 "NumBank/NatlTradesWHighUtilization",
                 "NumSatisfactoryTrades"
             ]
-        elif group == 'Number of months':
+        elif group == 'Months':
             cols = [
                 "MSinceOldestTradeOpen",
                 "MSinceMostRecentTradeOpen",
@@ -233,17 +232,17 @@ if __name__ == '__main__':
     )
     def update_global_plot(plot_selected):
         if plot_selected == 'SHAP Bar Plot':
-            children = [get_shap_plot(model, X_global_test)]
+            return [get_shap_plot(
+                explainer, shap_values, X_global_test, plot_type='bar'
+            )]
         elif plot_selected == 'SHAP Decision Plot':
-            children = [get_shap_plot(model, X_global_test,
-                                      plot_type='decision')]
+            return [get_shap_plot(
+                explainer, shap_values, X_global_test, plot_type='decision'
+            )]
         elif plot_selected == 'SHAP Summary Plot':
-            children = [get_shap_plot(model, X_global_test,
-                                      plot_type='summary')]
-        else:
-            children = [global_boxplot.update(model, X_global_test,
-                                              y_global_test)]
-        return children
+            return [get_shap_plot(
+                explainer, shap_values, X_global_test, plot_type='summary'
+            )]
 
 
     @app.callback(

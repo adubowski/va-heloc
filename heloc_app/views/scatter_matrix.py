@@ -32,7 +32,7 @@ class DataScatterMatrix(html.Div):
         )
 
         self.fig.update_layout(
-            height = 800,
+            height=800,
             yaxis_zeroline=False,
             xaxis_zeroline=False,
             dragmode='select',

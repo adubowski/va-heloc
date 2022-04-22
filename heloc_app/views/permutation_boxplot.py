@@ -7,7 +7,8 @@ from sklearn.inspection import permutation_importance
 
 class PermutationBoxplot(html.Div):
     def __init__(self, name, df):
-        """
+        """Permutation Importances Boxplot. Not used in the app afterall due
+        to a bug in interaction with other charts
        :param name: name of the plot
        :param df: dataframe
        """
@@ -32,7 +33,7 @@ class PermutationBoxplot(html.Div):
         X_global_test = X_global_test[:min(len(X_global_test), 50)]
         y_global_test = y_global_test[:min(len(y_global_test), 50)]
         perm_importance = permutation_importance(
-            model, X_global_test, y_global_test, n_repeats=7, random_state=0
+            model, X_global_test, y_global_test, n_repeats=3, random_state=0
         )  # Takes a long time
         sorted_idx = perm_importance.importances_mean.argsort()
         columns = list(X_global_test.columns)

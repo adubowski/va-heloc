@@ -1,9 +1,8 @@
 import base64
-from dash import html, dcc
+from dash import html
 import io
 import json
 from typing import Tuple, List
-
 import pandas as pd
 import shap
 from dice_ml import Model, Dice, Data
@@ -53,8 +52,6 @@ def get_x_y(features: pd.DataFrame, subset: List[str] = None) \
     categorical = []
     X = features[features.columns[1:]]
     y = features["RiskPerformance"]
-    # Sample half the data to make app smoother
-    X, _, y, _ = train_test_split(X, y, stratify=y, train_size=0.5)
     if subset and len(subset) > 0:
         X = X[subset]
 
@@ -224,9 +221,15 @@ def get_counterfactual_df(X_train, y_train, model, numerical, X_test,
     return cf_df
 
 
-def get_shap_plot(model, X_test, plot_type='bar'):
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X_test)[1]
+def get_shap_plot(explainer, shap_values, X_test, plot_type='bar'):
+    """Creates and returns the desired SHAP plot
+
+    :param explainer: SHAP Explainer object
+    :param shap_values: Precalculated SHAP values for the given test set
+    :param X_test: the test set to be evaluated on
+    :param plot_type: which plot to return: bar, summary or decision
+    :return: Dash html Img object with the requested image
+    """
     if plot_type == 'bar':
         shap.summary_plot(
             shap_values,
@@ -244,11 +247,13 @@ def get_shap_plot(model, X_test, plot_type='bar'):
         shap.decision_plot(
             explainer.expected_value[0],
             shap_values,
-            X_test.iloc,
+            X_test,
             show=False
         )
     buf = io.BytesIO()
     plt.savefig(buf, format="png", dpi=100, bbox_inches='tight')
     encoded = base64.b64encode(buf.getvalue()).decode('utf-8')
+    plt.switch_backend('agg')
     plt.close()
+    buf.close()
     return html.Img(src=f"data:image/png;base64, {encoded}")
