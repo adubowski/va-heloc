@@ -46,8 +46,8 @@ class LimeBarchart(html.Div):
 
         explanations = [e[0] for e in exp.as_list()]
         prob_values = [e[1] for e in exp.as_list()]
-        impact = ['Higher RiskPerformance Score' if e[1] > 0
-                  else 'Lower RiskPerformance Score' for e in exp.as_list()]
+        impact = ['Higher RiskPerformance' if e[1] > 0
+                  else 'Lower RiskPerformance' for e in exp.as_list()]
 
         d = {
             "Explanation": explanations,
@@ -57,8 +57,8 @@ class LimeBarchart(html.Div):
 
         self.fig = px.bar(
             data_frame=pd.DataFrame(d),
-            x="Explanation",
-            y="Probability attributed",
+            y="Explanation",
+            x="Probability attributed",
             orientation='h',
             color="Impact"
         )
@@ -73,8 +73,8 @@ class LimeBarchart(html.Div):
 
         # update titles
         self.fig.update_layout(
-            xaxis_title="Explanation",
-            yaxis_title="Probability attributed",
+            xaxis_title="Probability attributed",
+            yaxis_title="Explanation",
         )
 
         return self.fig

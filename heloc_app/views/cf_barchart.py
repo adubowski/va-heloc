@@ -28,9 +28,7 @@ class CFBarchart(html.Div):
             className="graph_card",
             children=[
                 html.H6(id=self.title_id,
-                        children="DiCE Counterfactual Explanations - What "
-                                 "change is needed to achieve the opposite "
-                                 "outcome?"
+                        children="DiCE Counterfactual Explanations"
                         ),
                 dcc.Graph(id=self.html_id),
             ],
