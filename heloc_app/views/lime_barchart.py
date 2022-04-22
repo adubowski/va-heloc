@@ -25,8 +25,7 @@ class LimeBarchart(html.Div):
             className="graph_card",
             children=[
                 html.H6(id=self.title_id,
-                        children="LIME Probability Explained (Can take a "
-                                 "couple of seconds to calculate...)"
+                        children="LIME Probability Explained"
                         ),
                 dcc.Graph(id=self.html_id),
             ],
@@ -58,8 +57,8 @@ class LimeBarchart(html.Div):
 
         self.fig = px.bar(
             data_frame=pd.DataFrame(d),
-            y="Explanation",
-            x="Probability attributed",
+            x="Explanation",
+            y="Probability attributed",
             orientation='h',
             color="Impact"
         )

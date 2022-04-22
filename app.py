@@ -222,9 +222,7 @@ if __name__ == '__main__':
                         feature_selection()]
         else:
             children = [generate_description_card(),
-                        global_interactions(),
-                        feature_selection()
-                        ]
+                        global_interactions()]
         return children
 
 
